@@ -31,6 +31,9 @@ typedef struct tagKINEMATICPARAMS11A {
 	double rz45 = 0;
 } KINEMATICPARAMS11A;
 
+//struct kinematicParams{
+//};
+
 typedef struct tagJOINTLIMITS {
 	double up[5] = { 2,.8,1,5,400 };
 	double dn[5] = { -3,-.8,-1,.0001,0 };

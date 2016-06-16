@@ -27,8 +27,8 @@ for i = n:-1:1;
     pm0 = i2d{i}.paramStruct2Array( i2d{i}.pms );
     pm0 = pm0*1.001;
     pmPM = abs(pm0*.05);
-    res{i} = i2d{i}.findQp0Pm0_xyzuxuyuz(Hs, qs, qp0,qpPM, pm0,pmPM);
-    %res{i} = i2d{i}.findQp0Pm0_xyzdotu(Hs, qs, qp0,qpPM, pm0,pmPM);
+    res{i} = i2d{i}.findQp0Pm0_xyzuxuyuz(qs,Hs(:,1:3,4),Hs(:,1:3,1), qp0,qpPM, pm0,pmPM);
+    %res{i} = i2d{i}.findQp0Pm0_xyzdotu(qs,Hs(:,1:3,4),Hs(:,1:3,1), qp0,qpPM, pm0,pmPM);
 end
 
 fprintf('Estimating q0:\n');

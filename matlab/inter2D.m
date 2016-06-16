@@ -54,35 +54,63 @@ classdef inter2D
         
         
 %---kinematic parameter error functions---
-        function errSum = errQp0Pm0_xyzuxuyuz( obj, qp0, pm0, meaHs, meaQs )
+        %errSum = errQp0Pm0_xyzuxuyuz( obj, qp0, pm0, meaHs, meaQs )
+        function errSum = errQp0Pm0_xyzuxuyuz( obj, qp0, pm0, meaQs, meaXs, meaUs )
             qp0 = reshape(qp0, 1,5);
-            n = size(meaHs,1);
+            n = size(meaQs,1);
+            errSum = 0;
+            %n4812: telapsed=506
+            % for it = 1:n;
+            %     H = obj.forwardK( qp0 + meaQs(it,:), pm0 );
+            %     errSum = errSum + norm(H(1:3,4)-meaXs(it,:)') + norm(H(1:3,1)-meaUs(it,:)');
+            % end
+            % errSum = errSum/n;
+
+            %n4812: telapsed=311 
+            parfor it = 1:n; 
+                H = obj.forwardK( qp0 + meaQs(it,:), pm0 ); %#ok<PFBNS>
+                errSum = errSum + norm(H(1:3,4)-meaXs(it,:)') + norm(H(1:3,1)-meaUs(it,:)');
+            end
+            errSum = errSum/n;
+
+            %n4812: telapsed=>924
+            % Hs = zeros(n,4,4);
+            % for it = 1:n;
+            %     Hs(it,:,:) = obj.forwardK( qp0 + meaQs(it,:), pm0 );
+            % end
+            % errSum = norm( reshape(Hs(:,1:3,4),n*3,1)-reshape(meaXs,n*3,1) ) + norm( reshape(Hs(:,1:3,1),n*3,1)-reshape(meaUs,n*3,1) );
+            % errSum = errSum/n;
+            
+            %n4812: telapsed=371; could probably make quicker with an inline fk function call
+            % Hs = zeros(n,4,4);
+            % parfor it = 1:n;
+            %     Hs(it,:,:) = obj.forwardK( qp0 + meaQs(it,:), pm0 ); %#ok<PFBNS>
+            % end
+            % errSum = norm( reshape(Hs(:,1:3,4),n*3,1)-reshape(meaXs,n*3,1) ) + norm( reshape(Hs(:,1:3,1),n*3,1)-reshape(meaUs,n*3,1) );
+            % errSum = errSum/n;
+        end
+        
+        function errSum = errQp0Pm0_xyzdotu( obj, qp0, pm0, meaQs, meaXs, meaUs )
+            qp0 = reshape(qp0, 1,5);
+            n = size(meaQs,1);
+            His = zeros(n,4,4);
             errSum = 0;
             for it = 1:n;
                 H = obj.forwardK( qp0 + meaQs(it,:), pm0 );
-                errSum = errSum + norm(H(1:3,4)-meaHs(it,1:3,4)') + norm(H(1:3,1)-meaHs(it,1:3,1)');
+                errSum = errSum + abs(1-dot( H(1:3,1),meaUs(it,:) ));
+                errSum = errSum + norm( H(1:3,4) - meaXs(it,:));
             end
-            
-        end
-        
-        function errSum = errQp0Pm0_xyzdotu( obj, qp0, pm0, meaHs, meaQs )
-            qp0 = reshape(qp0, 1,5);
-            n = size(meaHs,1);
-            His = zeros(n,4,4);
-            for it = 1:n;
-                His(it,:,:) = obj.forwardK( qp0 + meaQs(it,:), pm0 );
-            end
-            errSum = sum(abs(1-dot( meaHs(:,1:3,1), His(:,1:3,1), 2)) ) / n;
-            errSum = errSum + sum( sqrt(sum((meaHs(:,1:3,4)-His(:,1:3,4)).^2,2)) ) / n;
+            errSum = errSum/n;
         end
         
 %---kinematic parameter search---
-        function res = findQp0Pm0_xyzuxuyuz(obj, Hs, qs, qp0,qpPM, pm0,pmPM)
+        %res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
+        function res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
             x0 = [qp0;pm0];
             xp = [qp0 + qpPM; pm0 + pmPM];
             xn = [qp0 - qpPM; pm0 - pmPM];
             
-            fun = @(x)obj.errQp0Pm0_xyzuxuyuz( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), Hs, qs);
+            fun = @(x)obj.errQp0Pm0_xyzuxuyuz( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), qs, xs, us);
             
             tic
             [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
@@ -95,12 +123,12 @@ classdef inter2D
             res.msg = out.message;
         end
 
-        function res = findQp0Pm0_xyzdotu(obj, Hs, qs, qp0,qpPM, pm0,pmPM)
+        function res = findQp0Pm0_xyzdotu(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
             x0 = [qp0;pm0];
             xp = [qp0 + qpPM; pm0 + pmPM];
             xn = [qp0 - qpPM; pm0 - pmPM];
             
-            fun = @(x)obj.errQp0Pm0_xyzdotu( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), Hs, qs);
+            fun = @(x)obj.errQp0Pm0_xyzdotu( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), qs,xs,us);
             
             tic
             [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
@@ -119,7 +147,11 @@ classdef inter2D
         end
         
 %---inverse kinematic search---
+        %res = findQps_xyzuxuyuz(obj, qp0, goalXYZUxUyUz)
         function res = findQps_xyzuxuyuz(obj, qp0, goalXYZUxUyUz)
+            goalXYZUxUyUz = reshape(goalXYZUxUyUz, 6,1);
+            qp0 = reshape(qp0,5,1);
+            
             x0 = qp0;
             xn = obj.jlims.dn;
             xp = obj.jlims.up;

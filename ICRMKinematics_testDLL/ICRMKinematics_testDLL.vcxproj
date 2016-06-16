@@ -74,11 +74,11 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\interleavedCatheter\nlopt-2.4.2-dll32;D:\20160401_inter2d_estimate\ICRMKinematics\ICRMKinematics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\flat\interleavedCatheter\eigen-eigen-bdd17ee3b1b3; D:\flat\interleavedCatheter\nlopt-2.4.2-dll32; D:\flat\interleavedCatheter\ICRMKinematics\ICRMKinematics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\20160401_inter2d_estimate\ICRMKinematics\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\flat\interleavedCatheter\ICRMKinematics\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ICRMKinematics.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -99,13 +99,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\interleavedCatheter\nlopt-2.4.2-dll32;D:\20160401_inter2d_estimate\ICRMKinematics\ICRMKinematics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\flat\interleavedCatheter\eigen-eigen-bdd17ee3b1b3; D:\flat\interleavedCatheter\nlopt-2.4.2-dll32; D:\flat\interleavedCatheter\ICRMKinematics\ICRMKinematics;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\20160401_inter2d_estimate\ICRMKinematics\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\flat\interleavedCatheter\ICRMKinematics\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>ICRMKinematics.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

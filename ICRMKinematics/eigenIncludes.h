@@ -1,5 +1,6 @@
 #pragma once
 
-#include <D:\interleavedCatheter\eigen-eigen-bdd17ee3b1b3\Eigen\Core>
-#include <D:\interleavedCatheter\eigen-eigen-bdd17ee3b1b3\Eigen\Dense>
-#include <D:\interleavedCatheter\eigen-eigen-bdd17ee3b1b3\Eigen\Geometry>
+#include <Eigen\Core>
+#include <Eigen\Dense>
+#include <Eigen\Geometry>
+

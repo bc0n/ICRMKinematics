@@ -1,0 +1,33 @@
+﻿Initial commit of matlab versions
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	new file:   matlab/inter2D.m
+#	new file:   matlab/inter2D_kn11A.m
+#	new file:   matlab/inter2D_kn6A.m
+#	new file:   matlab/inter2D_test.m
+#
+# Changes not staged for commit:
+#	modified:   ICRMKinematics.VC.db
+#	modified:   ICRMKinematics.sln
+#	modified:   ICRMKinematics/ICRMKinematics.vcxproj
+#	modified:   ICRMKinematics/ICRMKinematics.vcxproj.filters
+#	modified:   ICRMKinematics/eigenIncludes.h
+#	deleted:    ICRMKinematics/forwardKinematics.cpp
+#	modified:   ICRMKinematics/ik_nlopt.cpp
+#	modified:   ICRMKinematics/kinematicsDLL.cpp
+#	modified:   ICRMKinematics/kinematics_structs.h
+#	modified:   ICRMKinematics/taskDefinitions.cpp
+#	modified:   ICRMKinematics/taskDefinitions.h
+#	modified:   ICRMKinematics_testDLL/ICRMKinematics_testDLL.vcxproj
+#	modified:   ICRMKinematics_testDLL/testDLL.cpp
+#	modified:   README.md
+#
+# Untracked files:
+#	ICRMKinematics/forwardK11A.cpp
+#	ICRMKinematics/forwardK6A.cpp
+#
+

@@ -15,33 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="forwardKinematics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ik_newton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="kinematicsDLL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="taskDefinitions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ik_nlopt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="kn_estimator.cpp">
+    <ClCompile Include="ip_nlopt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ip_nlopt.cpp">
+    <ClCompile Include="forwardK11A.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="forwardK6A.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="forwardKinematics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ik_newton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="kinematics_structs.h">
@@ -54,9 +45,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ik_nlopt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="kn_estimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ip_nlopt.h">

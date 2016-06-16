@@ -2,43 +2,42 @@
 #include "ik_nlopt.h"
 #include <iostream>
 
-// Single Point
-double funIK_xyz6A(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
-	FDATA6A *ptr;
-	ptr = (FDATA6A*)fData; // recover pt & tgt
+template <class TFK>
+double funIK_xyz(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
+	FDATA<TFK> *pfdata;
+	pfdata = (FDATA<TFK>*)fData; // recover pt & tgt
 
 	double qp[5] = { x[0],x[1],x[2],x[3],x[4] };
-	Eigen::Vector3d xyzVec;
-
-	ptr->pt.qps2point(qp, &xyzVec); // find current point
-
-	return (double)(ptr->tgtXYZVec - xyzVec).norm(); // find error norm
+	double xyz[3] = { 0,0,0 };
+	
+	//find the current joint's xyz
+	TFK tfk = *(pfdata->ptfk);
+	TaskXYZ<TFK> task(tfk);
+	task.qps2xyz(qp, xyz);
+	//std::cout << " fun " << xyz[0] << std::endl;
+	double res = pow(pfdata->target[0] - xyz[0],2) + pow(pfdata->target[1] - xyz[1],2) + pow(pfdata->target[2] - xyz[2],2); //norm
+	return (res);
 }
-InvKNLOpt_xyz6A::InvKNLOpt_xyz6A(KINEMATICPARAMS6A kParams, NLOPTPARAMS nParams, JOINTLIMITS jLims) {
-	kinParams = kParams;
-	nlParams = nParams;
-	jntLims = jLims;
+
+template <class TFK>
+InvK_nlopt_xyz<TFK>::InvK_nlopt_xyz(TFK fkArg, JOINTLIMITS jlArg, NLOPTPARAMS nlArg) {
+	tfk = fkArg;
+	jntLims = jlArg;
+	nlParams = nlArg;
 }
-int InvKNLOpt_xyz6A::solve(double *qps, double *xyz) {
+
+template <class TFK>
+int InvK_nlopt_xyz<TFK>::solve(double *qps, double *xyz){
 	int ret = -1;
-	Point6A pt(kinParams);
 
-	Eigen::VectorXd qpVec(5);
-	Eigen::Vector3d curVec;
-	Eigen::Vector3d tgtVec;
-	qpVec << qps[0], qps[1], qps[2], qps[3], qps[4];
-	tgtVec << xyz[0], xyz[1], xyz[2];
-
-	FDATA6A pttgt;
-	pttgt.pt = pt;
-	pttgt.tgtXYZVec = tgtVec;
-
+	//prep algorithm
+	FDATA<TFK> fdata = { &tfk, xyz};
 	nlopt::opt alg(ikTranslateNLOptAlg(nlParams.method), 5);
 	
 	// set objective
 	void *ptr;
-	ptr = &pttgt;
-	alg.set_min_objective(funIK_xyz6A, ptr);
+	ptr = &fdata;
+	alg.set_min_objective(funIK_xyz<TFK>, ptr);
 
 	// set initial step size (only for nongrad)
 	std::vector<double> dx0(5);
@@ -62,11 +61,28 @@ int InvKNLOpt_xyz6A::solve(double *qps, double *xyz) {
 	alg.set_maxeval(nlParams.maxIts);
 	alg.set_maxtime(nlParams.maxTimeSec);
 
+	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+	if (ikTranslateNLOptAlg(nlParams.method) == GN_MLSL || ikTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
+		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
+
+		lAlg.set_min_objective(funIK_xyz<TFK>, ptr);
+		lAlg.set_upper_bounds(limUp);
+		lAlg.set_lower_bounds(limDn);
+		lAlg.set_stopval(nlParams.minFunVal);
+		lAlg.set_ftol_abs(nlParams.tolFunAbs);
+		lAlg.set_xtol_abs(nlParams.tolXAbs);
+		lAlg.set_maxeval(nlParams.maxIts);
+		lAlg.set_maxtime(nlParams.maxTimeSec); //note same time used for overall and local searches, should probably reduce
+
+		alg.set_local_optimizer(lAlg);
+	}
+
 	// solve
 	nlopt::result res;
 	double fmin = 1e3;
 	std::vector<double> x(5);
 	for (int i = 0; i < 5; i++) { x[i] = .1; }
+	//std::cout << "funIK@x =" << funIK_xyz<TFK>(x, x, ptr) << std::endl;
 	try {
 		res = alg.optimize(x, fmin);
 	}
@@ -91,116 +107,17 @@ int InvKNLOpt_xyz6A::solve(double *qps, double *xyz) {
 		std::cout << "Caught: " << e.what() << std::endl;
 	}
 	//printf("alg: res %d    fmin = %f    x = [%f %f %f %f %f]\n", res, fmin, x[0], x[1], x[2], x[3], x[4]);
-	for (int i = 0; i < 5; i++) { qpVec(i) = x[i]; }
-	pt.qps2point(&qpVec, &curVec);
 
-	// assign outputs
-	Eigen::Map<Eigen::VectorXd>(qps, qpVec.rows()) = qpVec;
-	Eigen::Map<Eigen::VectorXd>(xyz, curVec.rows()) = curVec;
-	
+	//assign outputs
+	for (int i = 0; i < 5; i++) { qps[i] = x[i]; }
+	TaskXYZ<TFK> task(tfk);
+	task.qps2xyz(qps, xyz);
 	ret = res;
+
 	return ret;
 }
 
-double funIK_xyz11A(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
-	FDATA6A *ptr;
-	ptr = (FDATA6A*)fData; // recover pt & tgt
-
-	double qp[5] = { x[0],x[1],x[2],x[3],x[4] };
-	Eigen::Vector3d xyzVec;
-
-	ptr->pt.qps2point(qp, &xyzVec); // find current point
-
-	return (double)(ptr->tgtXYZVec - xyzVec).norm(); // find error norm
-}
-InvKNLOpt_xyz11A::InvKNLOpt_xyz11A(KINEMATICPARAMS11A kParams, NLOPTPARAMS nParams, JOINTLIMITS jLims) {
-	kinParams = kParams;
-	nlParams = nParams;
-	jntLims = jLims;
-}
-int InvKNLOpt_xyz11A::solve(double *qps, double *xyz) {
-	int ret = -1;
-	Point11A pt(kinParams);
-
-	Eigen::VectorXd qpVec(5);
-	Eigen::Vector3d curVec;
-	Eigen::Vector3d tgtVec;
-	qpVec << qps[0], qps[1], qps[2], qps[3], qps[4];
-	tgtVec << xyz[0], xyz[1], xyz[2];
-
-	FDATA11A pttgt;
-	pttgt.pt = pt;
-	pttgt.tgtXYZVec = tgtVec;
-
-	nlopt::opt alg(ikTranslateNLOptAlg(nlParams.method), 5);
-
-	// set objective
-	void *ptr;
-	ptr = &pttgt;
-	alg.set_min_objective(funIK_xyz6A, ptr);
-
-	// set initial step size (only for nongrad)
-	std::vector<double> dx0(5);
-	for (int i = 0; i < 5; i++) { dx0[i] = .01; }
-	alg.set_initial_step(dx0);
-
-	// set boundary constraints on x
-	std::vector<double> limUp(5);
-	std::vector<double> limDn(5);
-	for (int i = 0; i < 5; i++) {
-		limUp[i] = jntLims.up[i];
-		limDn[i] = jntLims.dn[i];
-	}
-	alg.set_upper_bounds(limUp);
-	alg.set_lower_bounds(limDn);
-
-	// set stopping criteria
-	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
-	alg.set_ftol_abs(nlParams.tolFunAbs);
-	alg.set_xtol_abs(nlParams.tolXAbs);
-	alg.set_maxeval(nlParams.maxIts);
-	alg.set_maxtime(nlParams.maxTimeSec);
-
-	// solve
-	nlopt::result res;
-	double fmin = 1e3;
-	std::vector<double> x(5);
-	for (int i = 0; i < 5; i++) { x[i] = .1; }
-	try {
-		res = alg.optimize(x, fmin);
-	}
-	catch (nlopt::roundoff_limited e) {
-		res = nlopt::FAILURE;
-		std::cout << "Caught RoundoffLimited: " << e.what() << std::endl;
-	}
-	catch (nlopt::forced_stop e) {
-		res = nlopt::FAILURE;
-		std::cout << "Caught ForcedStop: " << e.what() << std::endl;
-	}
-	catch (std::runtime_error e) {
-		res = nlopt::FAILURE;
-		std::cout << "Caught: " << e.what() << std::endl;
-	}
-	catch (std::invalid_argument e) {
-		res = nlopt::FAILURE;
-		std::cout << "Caught: " << e.what() << std::endl;
-	}
-	catch (std::bad_alloc e) {
-		res = nlopt::FAILURE;
-		std::cout << "Caught: " << e.what() << std::endl;
-	}
-	//printf("alg: res %d    fmin = %f    x = [%f %f %f %f %f]\n", res, fmin, x[0], x[1], x[2], x[3], x[4]);
-	for (int i = 0; i < 5; i++) { qpVec(i) = x[i]; }
-	pt.qps2point(&qpVec, &curVec);
-
-	// assign outputs
-	Eigen::Map<Eigen::VectorXd>(qps, qpVec.rows()) = qpVec;
-	Eigen::Map<Eigen::VectorXd>(xyz, curVec.rows()) = curVec;
-
-	ret = res;
-	return ret;
-}
-
+/*
 // Point PhiPsi
 double funIK_xyzpp6A(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
 	FDATA6A *ptr;
@@ -1186,6 +1103,8 @@ int InvKNLOpt_xyzKalBounds6A::solve(double *qps, double *xyz, double *qpsLast, d
 	return ret;
 }
 
+*/
+
 
 nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 	//std::cout << "recv " << method << std::endl;
@@ -1212,3 +1131,7 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 	default: return nlopt::LN_BOBYQA;
 	}
 }
+
+//useless definition to help linker, one for every possible template value
+template class InvK_nlopt_xyz<FwdK6A>;
+template class InvK_nlopt_xyz<FwdK11A>;
