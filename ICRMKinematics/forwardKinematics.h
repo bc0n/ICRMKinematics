@@ -2,6 +2,7 @@
 
 
 #include "kinematics_structs.h"
+#include <vector>
 
 class FwdK6A {
 public:

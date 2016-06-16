@@ -6,10 +6,8 @@
 #include "kinematics_structs.h"
 #include "forwardKinematics.h"
 #include "taskDefinitions.h"
-//#include "ik_newton.h"
 #include "ik_nlopt.h"
 #include "ip_nlopt.h"
-//#include "kn_estimator.h"
 
 // building a DLL
 #define DLLIMPORT __declspec (dllexport)
@@ -28,21 +26,16 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int get6AH05(double *qps, double *kinArray, double *arrayH05);
 	DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05);
 
-	//taskDefinitions
-	DLLIMPORT int get6A_xyz(double *qps, double *kinArray, double *xyz);
-	DLLIMPORT int get11A_xyz(double *qps, double *kinArray, double *xyz);
-	DLLIMPORT int get6A_phiPsi(double *qps, double *kinArray, double *pp);
-	DLLIMPORT int get11A_phiPsi(double *qps, double *kinArray, double *pp);
-	//DLLIMPORT int getCenterSum(double *qps, double *jntArray, double *cs);
+	//taskDefinitions --- expanded to encompass each FwdK and Task template variant
+	DLLIMPORT int getTask6A_xyz(double *qps, double *kinArray, double *xyz);
+	DLLIMPORT int getTask11A_xyz(double *qps, double *kinArray, double *xyz);
+	DLLIMPORT int getTask6A_phiPsi(double *qps, double *kinArray, double *pp);
+	DLLIMPORT int getTask11A_phiPsi(double *qps, double *kinArray, double *pp);
+	DLLIMPORT int getTask6A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
+	DLLIMPORT int getTask11A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
+	
 
-	//inverse kinematic solvers
-	//DLLIMPORT int getQps_IKNewtonSinglePoint(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNewtonPriorityPointPhiPsi(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz, double *phipsi);
-	//DLLIMPORT int getQps_IKNewtonPriorityPointCenterSum(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNewtonPriorityPointCenterSumStops(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNewtonAugmentedPointCenterSumStops(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNewtonAugmentedPointPhiPsiStops(double *qps, double *kinArray, double *nrArray, double *jntArray, double *xyz, double *phipsi);
-
+	//inverse kinematic solvers --- expanded to encompass each FwdK and Task template variant
 	// search begins from qps|xyz, result returned there
 	// returns -1 = failure
 	//         -2 = invalid args
@@ -56,15 +49,10 @@ extern "C" { // using a C++ compiler
 	//          5 = max evals
 	//          6 = max time reached
 	DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNLOpt_xyzpp6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi);
-	//DLLIMPORT int getQps_IKNLOpt_xyzpp11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi);
-	//DLLIMPORT int getFunVal_xyzpp11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi, double *fval);
-	//DLLIMPORT int getQps_IKNLOpt_xyzCtrSum6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz);
-	//DLLIMPORT int getQps_IKNLOpt_xyzppCtrSum6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *pp);
-	//DLLIMPORT int getQps_IKNLOpt_xyzMinChange6A(double *qps, double *xyz, double *qpsLast, double *kinArray, double *nlArray, double *jntArray);
-	//DLLIMPORT int getQps_IKNLOpt_xyzKalX6A(double *qps, double *xyz, double *qpsLast, double *qdsLast, double *kinArray, double *nlArray, double *jntArray, double *K11s, double *K21s, double tsSec);
-	//DLLIMPORT int getQps_IKNLOpt_xyzKalBounds6A(double *qps, double *xyz, double *qpsLast, double *qdsLast, double *kinArray, double *nlArray, double *jntArray, double *K11s, double *K21s, double *stdDevs, double tsSec);
-	
+	DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz);
+	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz);
+	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz);
+
 	//inverse paramameter estimators
 	//DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 	//assumes qps0 = 0 and kpms0 are centered between up&dn

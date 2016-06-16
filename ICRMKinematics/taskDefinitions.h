@@ -9,40 +9,43 @@
 template <class TFK> class TaskXYZ { // TFK = the type of FK model
 private:
 	TFK tfk;
+	Eigen::Matrix4d H;
 public:
 	TaskXYZ(TFK fkArg) { tfk = fkArg; }
-	void qps2xyz(double *qps, double *xyz) {
-		Eigen::Matrix4d H = tfk.qps2H05(qps);
+	void qps2task(double *qps, double *xyz) {
+		H = tfk.qps2H05(qps);
 		xyz[0] = H(0, 3);
 		xyz[1] = H(1, 3);
 		xyz[2] = H(2, 3);
-		//std::cout << "taskxyz "<< xyz[0] << std::endl;
 	}
-	void qps2xyz(double *qps, Eigen::Vector3d *xyzVec) {
-		Eigen::Matrix4d H = tfk.qps2H05(qps);
-		*xyzVec << H(0, 3), H(1, 3), H(2, 3);
-	}
-	void qps2xyz(Eigen::VectorXd *qpVec, Eigen::Vector3d *xyzVec) {
-		double qps[5] = { qpVec(0),qpVec(1),qpVec(2),qpVec(3),qpVec(4) };
-		Eigen::Matrix4d H = tfk.qps2H05(qps);
-		*xyzVec << H(0, 3), H(1, 3), H(2, 3);
+	double qps2taskError(double *qps, double *target) {
+		//find task
+		H = tfk.qps2H05(qps);
+
+		//find the task error and return its norm
+		double res = 0;
+		for (int i = 0; i < 3; i++) {
+			res += pow(target[i] - H(i,3), 2);
+		}
+		return sqrt(res);
 	}
 };
 
-template <class TFK> class TaskPhiPsi {
+template <class TFK> class TaskPhiPsi {// TFK = the type of FK model
 private:
 	TFK tfk;
+	Eigen::Matrix4d H;
 public:
 	TaskPhiPsi(TFK fkArg) { tfk = fkArg; }
-	void qps2phiPsi(double *qps, double *pp) {
-		Eigen::Matrix4d H = tfk.qps2H05(qps);
+	void qps2task(double *qps, double *pp) {
+		H = tfk.qps2H05(qps);
 		*(pp+0) = atan2(H(2, 0), sqrt(pow(H(0, 0), 2) + pow(H(1, 0), 2)));
 		*(pp+1) = atan2(H(1, 0), H(0, 0));
 	}
 };
 
 //center of joint ranges, minimize summed joint angles
-template <class TFK> class TaskCenterSum {
+template <class TFK> class TaskCenterSum {// TFK = the type of FK model
 private:
 	TFK tfk;
 	JOINTLIMITS jntLims;
@@ -51,7 +54,7 @@ public:
 		jntLims = jLims;
 		tfk = fkArg;
 	}
-	void qps2CenterSum(double *qps, double *cs) {
+	void qps2task(double *qps, double *cs) {
 		// want large values away from center
 		cs[0] = 0; cs[1] = 0;
 		double mn;
@@ -66,19 +69,32 @@ public:
 	}
 };
 
-template <class TFK> class TaskXYZUxUyUz {
+template <class TFK> class TaskXYZUxUyUz {// TFK = the type of FK model
 private:
 	TFK tfk;
+	Eigen::Matrix4d H;
 public:
 	TaskXYZUxUyUz(TFK fkArg) { tfk = fkArg; }
-	void qps2XYZUxUyUz(double *qps, double *xyzuxuyuz) {
-		Eigen::Matrix4d H = tfk.qps2H05(qps);
+	void qps2task(double *qps, double *xyzuxuyuz) {
+		H = tfk.qps2H05(qps);
 		xyzuxuyuz[0] = H(0, 3);
 		xyzuxuyuz[1] = H(1, 3);
 		xyzuxuyuz[2] = H(2, 3);
 		xyzuxuyuz[3] = H(0, 0);
 		xyzuxuyuz[4] = H(1, 0);
 		xyzuxuyuz[5] = H(2, 0);
+	}
+
+	double qps2taskError(double *qps, double *target) {
+		//find task
+		H = tfk.qps2H05(qps);
+		//find the task error and return its norm
+		double res = 0;
+		for (int i = 0; i < 3; i++) {
+			res += pow(target[i] - H(i, 3), 2); //x,y,z
+			res += pow(target[i+3] - H(i, 0), 2); //ux,uy,uz
+		}
+		return sqrt(res);
 	}
 };
 

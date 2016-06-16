@@ -2,42 +2,46 @@
 #include "ik_nlopt.h"
 #include <iostream>
 
-template <class TFK>
-double funIK_xyz(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
-	FDATA<TFK> *pfdata;
-	pfdata = (FDATA<TFK>*)fData; // recover pt & tgt
+template <class TASK, class TFK>
+double funIK_normTask(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
 
-	double qp[5] = { x[0],x[1],x[2],x[3],x[4] };
-	double xyz[3] = { 0,0,0 };
-	
-	//find the current joint's xyz
-	TFK tfk = *(pfdata->ptfk);
-	TaskXYZ<TFK> task(tfk);
-	task.qps2xyz(qp, xyz);
-	//std::cout << " fun " << xyz[0] << std::endl;
-	double res = pow(pfdata->target[0] - xyz[0],2) + pow(pfdata->target[1] - xyz[1],2) + pow(pfdata->target[2] - xyz[2],2); //norm
-	return (res);
+	FDATA<TASK> *pfdata;
+	pfdata = (FDATA<TASK>*)fData; // recover pt & tgt
+
+	double qps[5] = { x[0],x[1],x[2],x[3],x[4] };
+
+	//find the current joint's xyz by running the task(fk(qps))
+	//(*(pfdata->task)).qps2task(qp, xyz);
+
+	//return the norm of the task error...perhaps move this into the TASK
+	//double res = pow(pfdata->target[0] - xyz[0], 2) + pow(pfdata->target[1] - xyz[1], 2) + pow(pfdata->target[2] - xyz[2], 2); //norm
+	//return sqrt(res);
+
+	return (*(pfdata->task)).qps2taskError(qps, pfdata->target);
+
 }
 
-template <class TFK>
-InvK_nlopt_xyz<TFK>::InvK_nlopt_xyz(TFK fkArg, JOINTLIMITS jlArg, NLOPTPARAMS nlArg) {
+// constructor receives the fk parameters through the templated fkArg
+template <class TASK, class TFK>
+InvK_nlopt<TASK,TFK>::InvK_nlopt(TFK fkArg, JOINTLIMITS jlArg, NLOPTPARAMS nlArg) {
 	tfk = fkArg;
 	jntLims = jlArg;
 	nlParams = nlArg;
 }
 
-template <class TFK>
-int InvK_nlopt_xyz<TFK>::solve(double *qps, double *xyz){
+template <class TASK, class TFK>
+int InvK_nlopt<TASK, TFK>::solve(double *qps, double *xyz){
 	int ret = -1;
 
 	//prep algorithm
-	FDATA<TFK> fdata = { &tfk, xyz};
-	nlopt::opt alg(ikTranslateNLOptAlg(nlParams.method), 5);
+	TASK task(tfk);
+	FDATA<TASK> fdata = { &task, xyz};
+	nlopt::opt alg(ikTranslateNLOptAlg(nlParams.method), 5);// 5 = size of x
 	
 	// set objective
 	void *ptr;
 	ptr = &fdata;
-	alg.set_min_objective(funIK_xyz<TFK>, ptr);
+	alg.set_min_objective(funIK_normTask<TASK,TFK>, ptr);
 
 	// set initial step size (only for nongrad)
 	std::vector<double> dx0(5);
@@ -65,7 +69,7 @@ int InvK_nlopt_xyz<TFK>::solve(double *qps, double *xyz){
 	if (ikTranslateNLOptAlg(nlParams.method) == GN_MLSL || ikTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
 		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
 
-		lAlg.set_min_objective(funIK_xyz<TFK>, ptr);
+		lAlg.set_min_objective(funIK_normTask<TASK,TFK>, ptr);
 		lAlg.set_upper_bounds(limUp);
 		lAlg.set_lower_bounds(limDn);
 		lAlg.set_stopval(nlParams.minFunVal);
@@ -77,11 +81,23 @@ int InvK_nlopt_xyz<TFK>::solve(double *qps, double *xyz){
 		alg.set_local_optimizer(lAlg);
 	}
 
+	//set starting location
+	std::vector<double> x(5);
+	for (int i = 0; i < 5; i++) {
+		if (qps[i] > limUp[i]) {
+			x[i] = limUp[i];
+		}else if (qps[i] < limDn[i]) { 
+			x[i] = limDn[i];
+		}else {
+			x[i] = qps[i];
+		}
+	}
+	//printf("starting at = [%f %f %f %f %f]\n", x[0], x[1], x[2], x[3], x[4]);
+
 	// solve
 	nlopt::result res;
 	double fmin = 1e3;
-	std::vector<double> x(5);
-	for (int i = 0; i < 5; i++) { x[i] = .1; }
+	
 	//std::cout << "funIK@x =" << funIK_xyz<TFK>(x, x, ptr) << std::endl;
 	try {
 		res = alg.optimize(x, fmin);
@@ -110,8 +126,7 @@ int InvK_nlopt_xyz<TFK>::solve(double *qps, double *xyz){
 
 	//assign outputs
 	for (int i = 0; i < 5; i++) { qps[i] = x[i]; }
-	TaskXYZ<TFK> task(tfk);
-	task.qps2xyz(qps, xyz);
+	task.qps2task(qps, xyz); //run the task on the found qps to capture the found xyz
 	ret = res;
 
 	return ret;
@@ -1133,5 +1148,7 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 }
 
 //useless definition to help linker, one for every possible template value
-template class InvK_nlopt_xyz<FwdK6A>;
-template class InvK_nlopt_xyz<FwdK11A>;
+template class InvK_nlopt<TaskXYZ<FwdK6A>, FwdK6A>;
+template class InvK_nlopt<TaskXYZ<FwdK11A>, FwdK11A>;
+template class InvK_nlopt<TaskXYZUxUyUz<FwdK6A>, FwdK6A>;
+template class InvK_nlopt<TaskXYZUxUyUz<FwdK11A>, FwdK11A>;

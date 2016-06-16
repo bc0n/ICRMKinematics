@@ -4,7 +4,7 @@ The main project _ICRMKinematics_ includes methods for searching the joint and k
 
 ## Notes on configuring visual studio
 ### ICRMKinematics
-This build a x86 dll callable by the outer LabVIEW loop. As such, the project properties are:
+This builds an x86 dll callable by the outer LabVIEW loop. As such, the project properties are:
 * Configuration: All Configurations, Platform: Win32 (should be Active)
 * General -- Configuration Type = dll
 * C/C++ -- All Options -- Additional Include Directories = D:\flat\interleavedCatheter\eigen-eigen-bdd17ee3b1b3\; D:\flat\interleavedCatheter\nlopt-2.4.2-dll32;

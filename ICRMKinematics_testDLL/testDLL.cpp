@@ -9,86 +9,68 @@ double kn11A[11];
 double nrArray[5]; //newton-raphson params
 double nlArray[6]; //nonlinear optimization params
 double jArray[10]; //joint limits
-////////////////////////////////////////////////////////////fontSizeChecker///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void checkFwdK6A(double *qps, double *knArray) {
-	int ret = 0;
-	double arrayH01[12], arrayH02[12], arrayH03[12], arrayH04[12], arrayH05[12];
-	//H01 = obj.Tx(766.6)*obj.Ty(-112)*obj.Tz(14.7)*obj.Rz(-27*pi/180) * obj.Rx(qp(1)); #ok<*PROP> %prox roll
-	ret = get6AH01(qps, knArray, arrayH01);
-	std::cout << "H01 = " << std::endl;
-	for(int i = 0; i < 12; i++) { printf("%3.4f ", arrayH01[i]); }
-	std::cout << std::endl << std::endl;
-
-	//H12 = obj.Rz(qp(2)); %pitch
-	ret = get6AH02(qps, knArray, arrayH02);
-	std::cout << "H02 = " << std::endl;
-	for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH02[i]); }
-	std::cout << std::endl << std::endl;
-
-	ret = get6AH03(qps, knArray, arrayH03);
-	std::cout << "H03 = " << std::endl;
-	for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH03[i]); }
-	std::cout << std::endl << std::endl;
-
-	ret = get6AH04(qps, knArray, arrayH04);
-	std::cout << "H04 = " << std::endl;
-	for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH04[i]); }
-	std::cout << std::endl << std::endl;
-
-	ret = get6AH05(qps, knArray, arrayH05);
-	std::cout << "H05 = " << std::endl;
-	for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH05[i]); }
-	std::cout << std::endl << std::endl;
-}
-void checkFwdK11A(double *qps, double *knArray) {
-	int ret = 0;
-	double arrayH01[12], arrayH02[12], arrayH03[12], arrayH04[12], arrayH05[12];
-	//ret = get11AH01(qps, knArray, arrayH01);
-	//std::cout << "H01 = " << std::endl;
-	//for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH01[i]); }
-	//std::cout << std::endl << std::endl;
-
-	////H12 = obj.Rz(qp(2)); %pitch
-	//ret = get11AH02(qps, knArray, arrayH02);
-	//std::cout << "H02 = " << std::endl;
-	//for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH02[i]); }
-	//std::cout << std::endl << std::endl;
-
-	//ret = get11AH03(qps, knArray, arrayH03);
-	//std::cout << "H03 = " << std::endl;
-	//for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH03[i]); }
-	//std::cout << std::endl << std::endl;
-
-	//ret = get11AH04(qps, knArray, arrayH04);
-	//std::cout << "H04 = " << std::endl;
-	//for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH04[i]); }
-	//std::cout << std::endl << std::endl;
-
-	ret = get11AH05(qps, knArray, arrayH05);
-	std::cout << "H05 = " << std::endl;
-	for (int i = 0; i < 12; i++) { printf("%3.4f ", arrayH05[i]); }
-	std::cout << std::endl << std::endl;
-}
-
 
 void check_nl_xyz(){
 	double qpsGoal[5], qps[5], xyzGoal[3], xyz[3];
 	int ret = 99;
-
-	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0;
+	
 	qpsGoal[0] = .5; qpsGoal[1] = .5; qpsGoal[2] = -.3; qpsGoal[3] = 2; qpsGoal[4] = 30;
+	
+	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0;
+	ret = getTask6A_xyz(qpsGoal, kn6A, xyzGoal);
 
-	ret = get6A_xyz(qpsGoal, kn6A, xyzGoal);
-
-	printf("NLOpt Point\n");
+	printf("NLOpt XYZ 6A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f]\n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
 	ret = getQps_IKnlopt_xyz6A(qps, kn6A, nlArray, jArray, xyz);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], ret);
 	std::cout << std::endl;
+
+
+	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0;
+	ret = getTask11A_xyz(qpsGoal, kn11A, xyzGoal);
+
+	printf("NLOpt XYZ 11A\n");
+	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
+	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f]\n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2]);
+	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
+	ret = getQps_IKnlopt_xyz11A(qps, kn11A, nlArray, jArray, xyz);
+	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], ret);
+	std::cout << std::endl;
 }
 
+void check_nl_xyzuxuyuz() {
+	double qpsGoal[5], qps[5], xyzGoal[3], xyz[3], uxyzGoal[3],uxyz[3];
+	int ret = 99;
+
+	qpsGoal[0] = .5; qpsGoal[1] = .5; qpsGoal[2] = -.3; qpsGoal[3] = 2; qpsGoal[4] = 30;
+
+	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0;
+	ret = getTask6A_xyzuxuyuz(qpsGoal, kn6A, xyzGoal, uxyzGoal);
+
+	printf("NLOpt XYZUxUyUz 6A\n");
+	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
+	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] \n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2], uxyzGoal[0], uxyzGoal[1], uxyzGoal[2]);
+	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
+	uxyz[0] = uxyzGoal[0]; uxyz[1] = uxyzGoal[1]; uxyz[2] = uxyzGoal[2];
+	ret = getQps_IKnlopt_xyzuxuyuz6A(qps, kn6A, nlArray, jArray, xyz, uxyz);
+	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], uxyz[0], uxyz[1], uxyz[2], ret);
+	std::cout << std::endl;
+
+
+	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0;
+	ret = getTask11A_xyzuxuyuz(qpsGoal, kn11A, xyzGoal, uxyzGoal);
+
+	printf("NLOpt XYZUxUyUz 11A\n");
+	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
+	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] \n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2], uxyzGoal[0], uxyzGoal[1], uxyzGoal[2]);
+	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
+	uxyz[0] = uxyzGoal[0]; uxyz[1] = uxyzGoal[1]; uxyz[2] = uxyzGoal[2];
+	ret = getQps_IKnlopt_xyzuxuyuz11A(qps, kn11A, nlArray, jArray, xyz, uxyz);
+	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], uxyz[0], uxyz[1], uxyz[2], ret);
+	std::cout << std::endl;
+}
 
 int main(){
 	
@@ -110,14 +92,13 @@ int main(){
 	nrArray[3] = .3; //primary factor
 	nrArray[4] = .01; //secondary factor;
 	
-	nlArray[0] = 1e6; // maxIts
+	nlArray[0] = 1e9; // maxIts
 	nlArray[1] = 60; // max time sec
 	nlArray[3] = 1e-9; // min fun val
 	nlArray[4] = 1e-11; // tol fun
 	nlArray[5] = 1e-9; //tol x
-
-	//nlArray[2] = 00; // GN_DIRECT
-	nlArray[2] = 8; // MLSL w/ NM
+	nlArray[2] = 00; // GN_DIRECT
+	//nlArray[2] = 8; // MLSL w/ NM
 	//nlArray[2] = 14; //LN_NelderMead
 	
 	jArray[0] = -2; // joint minima
@@ -132,6 +113,7 @@ int main(){
 	jArray[9] = 500;
 	
 	check_nl_xyz();
+	check_nl_xyzuxuyuz();
 	
 	
 	std::cout << "\n\nPress Enter";
