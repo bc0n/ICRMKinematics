@@ -6,17 +6,11 @@ template <class TASK, class TFK>
 double funIK_normTask(const std::vector<double> &x, std::vector<double> &grad, void *fData) {
 
 	FDATA<TASK> *pfdata;
-	pfdata = (FDATA<TASK>*)fData; // recover pt & tgt
+	pfdata = (FDATA<TASK>*)fData; // recover task & tgt
 
 	double qps[5] = { x[0],x[1],x[2],x[3],x[4] };
 
-	//find the current joint's xyz by running the task(fk(qps))
-	//(*(pfdata->task)).qps2task(qp, xyz);
-
-	//return the norm of the task error...perhaps move this into the TASK
-	//double res = pow(pfdata->target[0] - xyz[0], 2) + pow(pfdata->target[1] - xyz[1], 2) + pow(pfdata->target[2] - xyz[2], 2); //norm
-	//return sqrt(res);
-
+	//find the current candidate's error
 	return (*(pfdata->task)).qps2taskError(qps, pfdata->target);
 
 }
@@ -76,7 +70,7 @@ int InvK_nlopt<TASK, TFK>::solve(double *qps, double *xyz){
 		lAlg.set_ftol_abs(nlParams.tolFunAbs);
 		lAlg.set_xtol_abs(nlParams.tolXAbs);
 		lAlg.set_maxeval(nlParams.maxIts);
-		lAlg.set_maxtime(nlParams.maxTimeSec); //note same time used for overall and local searches, should probably reduce
+		lAlg.set_maxtime(nlParams.maxTimeSec/100); //note same time used for overall and local searches, should probably reduce
 
 		alg.set_local_optimizer(lAlg);
 	}
@@ -1143,7 +1137,7 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 	case nlMethod::LN_NEWUOA_BOUND: return nlopt::LN_NEWUOA_BOUND;//16
 	case nlMethod::LN_PRAXIS: return nlopt::LN_PRAXIS;//17
 	case nlMethod::LN_SBPLX: return nlopt::LN_SBPLX;//18
-	default: return nlopt::LN_BOBYQA;
+	default: return nlopt::GN_DIRECT;
 	}
 }
 

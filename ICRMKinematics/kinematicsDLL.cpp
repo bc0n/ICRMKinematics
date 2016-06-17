@@ -1,5 +1,4 @@
 #include "kinematicsDLL.h"
-#include "taskDefinitions.h"
 #include <iostream>
 
 
@@ -235,133 +234,68 @@ DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double 
 	return ret;
 }
 
-//DLLIMPORT int getQps_IKNLOpt_xyzpp6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzpp6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.solve(qps, xyz, phipsi);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzCtrSum6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzCenterSum6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.solve(qps, xyz);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzppCtrSum6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *pp) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzppCenterSum6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.solve(qps, xyz, pp);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzMinChange6A(double *qps, double *xyz, double *qpsLast, double *kinArray, double *nlArray, double *jntArray) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzMinChange6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.solve(qps, xyz, qpsLast);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzKalX6A(double *qps, double *xyz, double *qpsLast, double *qdsLast, double *kinArray, double *nlArray, double *jntArray, double *K11s, double *K21s, double tsSec) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzKalX6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray), tsSec);
-//	ret = ik.solve(qps, xyz, qpsLast, qdsLast, K11s, K21s);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzKalBounds6A(double *qps, double *xyz, double *qpsLast, double *qdsLast, double *kinArray, double *nlArray, double *jntArray, double *K11s, double *K21s, double *stdDevs, double tsSec) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzKalBounds6A ik(kinArray2Struct6A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray), tsSec);
-//	ret = ik.solve(qps, xyz, qpsLast, qdsLast, K11s, K21s, stdDevs);
-//
-//	return ret;
-//}
-//DLLIMPORT int getQps_IKNLOpt_xyzpp11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi) {
-//	int ret = -1;
-//
-//	InvKNLOpt_xyzpp11A ik(kinArray2Struct11A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.solve(qps, xyz, phipsi);
-//
-//	return ret;
-//}
-//DLLIMPORT int getFunVal_xyzpp11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *phipsi, double *fval) {
-//	int ret = -1;
-//	InvKNLOpt_xyzpp11A ik(kinArray2Struct11A(kinArray), nlArray2Struct(nlArray), jntArray2Struct(jntArray));
-//	ret = ik.getFval(qps, xyz, phipsi, fval);
-//
-//	return ret;
-//}
-
 // wrap inverse parameter solvers
-//DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
-//	InvPNLOpt_xyzdotu11A ip;
-//	ip.funIP_UX11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
-//	return 0;
-//}
-//DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin) {
-//	int ret = -99;
-//
-//	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
-//	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
-//	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
-//	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
-//
-//	InvPNLOpt_xyzdotu11A ip(kp11up, kp11dn, q0pLims, nlParams);
-//	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, fmin);
-//	
-//	return ret;
-//}
-//DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin) {
-//	int ret = -99;
-//
-//	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
-//	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
-//	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
-//	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
-//
-//	InvPNLOpt_xyzdotu11A ip(kp11up, kp11dn, q0pLims, nlParams);
-//	double x0[5 + 11];
-//	for (int i = 0; i < 5; i++) { x0[i] = qps0[i]; }
-//	for (int i = 0; i < 11; i++) { x0[i+5] = kps0[i]; }
-//
-//	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
-//
-//	for (int i = 0; i < 5; i++) { qps0[i] = x0[i]; }
-//	for (int i = 0; i < 11; i++) { kps0[i] = x0[i + 5]; }
-//	return ret;
-//}
-//
-//DLLIMPORT int funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
-//	InvPNLOpt_xyzpp11A ip;
-//	ip.funIP_xyzpp11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
-//	return 0;
-//}
-//DLLIMPORT int estimatePmsQ_IPNLOpt_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin) {
-//	int ret = -99;
-//
-//	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
-//	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
-//	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
-//	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
-//
-//	InvPNLOpt_xyzpp11A ip(kp11up, kp11dn, q0pLims, nlParams);
-//	double x0[5 + 11];
-//	for (int i = 0; i < 5; i++) { x0[i] = qps0[i]; }
-//	for (int i = 0; i < 11; i++) { x0[i + 5] = kps0[i]; }
-//
-//	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
-//
-//	for (int i = 0; i < 5; i++) { qps0[i] = x0[i]; }
-//	for (int i = 0; i < 11; i++) { kps0[i] = x0[i + 5]; }
-//	return ret;
-//}
+DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
+	InvPNLOpt_xyzdotu11A ip;
+	ip.funIP_UX11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
+	return 0;
+}
+DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin) {
+	int ret = -99;
+
+	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
+	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
+	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvPNLOpt_xyzdotu11A ip(kp11up, kp11dn, q0pLims, nlParams);
+	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, fmin);
+	
+	return ret;
+}
+DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin) {
+	int ret = -99;
+
+	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
+	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
+	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvPNLOpt_xyzdotu11A ip(kp11up, kp11dn, q0pLims, nlParams);
+	double x0[5 + 11];
+	for (int i = 0; i < 5; i++) { x0[i] = qps0[i]; }
+	for (int i = 0; i < 11; i++) { x0[i+5] = kps0[i]; }
+
+	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
+
+	for (int i = 0; i < 5; i++) { qps0[i] = x0[i]; }
+	for (int i = 0; i < 11; i++) { kps0[i] = x0[i + 5]; }
+	return ret;
+}
+DLLIMPORT int funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
+	InvPNLOpt_xyzpp11A ip;
+	ip.funIP_xyzpp11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
+	return 0;
+}
+DLLIMPORT int estimatePmsQ_IPNLOpt_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin) {
+	int ret = -99;
+
+	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
+	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
+	JOINTLIMITS q0pLims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvPNLOpt_xyzpp11A ip(kp11up, kp11dn, q0pLims, nlParams);
+	double x0[5 + 11];
+	for (int i = 0; i < 5; i++) { x0[i] = qps0[i]; }
+	for (int i = 0; i < 11; i++) { x0[i + 5] = kps0[i]; }
+
+	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
+
+	for (int i = 0; i < 5; i++) { qps0[i] = x0[i]; }
+	for (int i = 0; i < 11; i++) { kps0[i] = x0[i + 5]; }
+	return ret;
+}
 
 
 KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray) {
