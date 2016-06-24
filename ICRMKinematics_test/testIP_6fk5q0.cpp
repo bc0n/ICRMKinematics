@@ -3,10 +3,7 @@
 
 void main() {
 	//load test file
-	//char fname[] = "testTriangleData.dat"; //double
-	//char fname[] = "D:\\20160401_inter2d_estimate\\02_optimalHome\\testTriangleData2.dat";
-	char fname[] = "D:\\20160401_inter2d_estimate\\02_optimalHome\\testSquareQps.dat";
-	int ncols = 38; //it, q0,q1,q2,q3,q4, H1, H2
+	char fname[] = "D:\\20160401_inter2d_estimate\\06_parameterLoop\\testSquareXYZ_n6208_160621_160312.dat";
 
 	//open
 	printf("\n\nOpening %s\n", fname);
@@ -17,53 +14,52 @@ void main() {
 	//fileSize & initialize variables
 	fs.seekg(0, fs.end);
 	long fileSize = (long)fs.tellg();
-	long nrows = fileSize / sizeof(double) / ncols;
 	fs.seekg(0, fs.beg);
-//nrows = 1;
-	printf("fileSize %d with %d rows\n", fileSize, nrows);
-
-	char *buffer = new char[fileSize];
-	double *stackedQ = new double[nrows * 5];
-	double *stackedU = new double[nrows * 3];
-	double *stackedX = new double[nrows * 3];
-	double *index = new double[nrows];
-
+	printf("fileSize %d\n", fileSize);
+	
 	//read
+	char *buffer = new char[fileSize];
 	fs.read(buffer, fileSize);
 	printf("read %d chars\n", (int)fs.gcount());
 	fs.close();
 
 	//extract -- Hs in row-major
 	double *pd = reinterpret_cast<double*>(buffer); //buffer is a byte array, but we know it to be double data
-	//0i 1q0 2q1 3q2 4q3 5q4 : 6ux 7vx 8wx 9x 10uy 11vy 12wy 13y 14uz 15vz 16wz 17z 180 190 200 211
-	for (int irow = 0; irow < nrows; irow ++){
-		index[irow] = *(pd + 0 + irow*ncols);
-		stackedQ[irow * 5  + 0] = *(pd + 1 + irow*ncols);
-		stackedQ[irow * 5 + 1] = *(pd + 2 + irow*ncols);
-		stackedQ[irow * 5 + 2] = *(pd + 3 + irow*ncols);
-		stackedQ[irow * 5 + 3] = *(pd + 4 + irow*ncols);
-		stackedQ[irow * 5 + 4] = *(pd + 5 + irow*ncols);
+	int na = (int)pd[0];
+	int nb = (int) pd[1];
+	printf("na=%d, nb=%d\n", na, nb);
 
-		stackedU[irow * 3 + 0] = *(pd + 6  + irow*ncols);
-		stackedU[irow * 3 + 1] = *(pd + 10 + irow*ncols);
-		stackedU[irow * 3 + 2] = *(pd + 14 + irow*ncols);
+	double *stackedQ = new double[nb * 5];
+	double *stackedU = new double[nb * 3];
+	double *stackedX = new double[nb * 3];
 
-		stackedX[irow * 3 + 0] = *(pd + 9  + irow*ncols);
-		stackedX[irow * 3 + 1] = *(pd + 13 + irow*ncols);
-		stackedX[irow * 3 + 2] = *(pd + 17 + irow*ncols);
-
-		//printf("%+5.4f: q[%+5.4f %+5.4f %+5.4f %+5.4f %+5.4f] ", index[irow], stackedQ[irow * 5 + 0], stackedQ[irow * 5 + 1], stackedQ[irow * 5 + 2], stackedQ[irow * 5 + 3], stackedQ[irow * 5 + 4]);
-		//printf("u[%+5.4f %+5.4f %+5.4f]  ", stackedU[irow * 3 + 0], stackedU[irow * 3 + 1], stackedU[irow * 3 + 2]);
-		//printf("x[%+5.4f %+5.4f %+5.4f]\n", stackedX[irow * 3 + 0], stackedX[irow * 3 + 1], stackedX[irow * 3 + 2]);
+	//data is ordered [na,nb,Hsquare, indexMap,qCnv,xyzCmd,xyzCnv,nrmCnv,retCnv, qMeasured,Hmeasured]
+	//we want to invP on the measureds which are nb long
+	int iqm = 1 + 1 + na*(16 + 1 + 5 + 3 + 3 + 1 + 1) + 1; //last +1 for 0indexing
+	int ihm = iqm + nb * 5;
+	//printf("iqm = %d, ihm = %d\n", iqm, ihm);
+	//for (int i = iqm - 10; i < iqm + 30; i++) {
+	//	printf("%d: %f\n", i, pd[i]);
+	//}
+	//for (int i = ihm - 10; i < ihm + 30; i++) {
+	//	printf("%d: %f\n", i, pd[i]);
+	//}
+	for (int i = 0; i < nb; i++) {
+		stackedQ[i * 5 + 0] = pd[iqm + i * 5 + 0];
+		stackedQ[i * 5 + 1] = pd[iqm + i * 5 + 1];
+		stackedQ[i * 5 + 2] = pd[iqm + i * 5 + 2];
+		stackedQ[i * 5 + 3] = pd[iqm + i * 5 + 3];
+		stackedQ[i * 5 + 4] = pd[iqm + i * 5 + 4];
+		stackedU[i * 3 + 0] = pd[ihm + i * 16 + 0];
+		stackedU[i * 3 + 1] = pd[ihm + i * 16 + 4];
+		stackedU[i * 3 + 2] = pd[ihm + i * 16 + 8];
+		stackedX[i * 3 + 0] = pd[ihm + i * 16 + 3];
+		stackedX[i * 3 + 1] = pd[ihm + i * 16 + 7];
+		stackedX[i * 3 + 2] = pd[ihm + i * 16 + 11];
 	}
-	for (int i = 0; i < 800; i = i+10) {
-		//printf("i[%d]: q[%+5.4f] u[%+5.4f] x[%+5.4f]\n", i, stackedQ[i], stackedU[i], stackedX[i]);
-		//printf("i[%d]: q[%+5.4f] u[%+5.4f] x[%+5.4f]\n", i, stackedQ[(int)fmod(i, 5)], stackedU[i], stackedX[i]);
-		printf("%+5.4f: q[%+5.4f %+5.4f %+5.4f %+5.4f %+5.4f] ", index[i], stackedQ[i * 5 + 0], stackedQ[i * 5 + 1], stackedQ[i * 5 + 2], stackedQ[i * 5 + 3], stackedQ[i * 5 + 4]);
-		printf("u[%+5.4f %+5.4f %+5.4f]  ", stackedU[i * 3 + 0], stackedU[i * 3 + 1], stackedU[i * 3 + 2]);
-		printf("x[%+5.4f %+5.4f %+5.4f]\n", stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2]);
-
-	}
+	//for (int i = nb-20; i < nb; i++) {
+	//	printf("q[%5.4f %5.4f %5.4f %5.4f %5.4f] x[%5.4f %5.4f %5.4f] u[%5.4f %5.4f %5.4f]\n", stackedQ[i*5+0], stackedQ[i * 5 + 1], stackedQ[i * 5 + 2], stackedQ[i * 5 + 3], stackedQ[i * 5 + 4], stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2], stackedU[i * 3 + 0], stackedU[i * 3 + 1], stackedU[i * 3 + 2]);
+	//}
 
 	//test IP
 	double k11up[11], k11dn[11], k11pm[11], k110[11];
@@ -72,7 +68,7 @@ void main() {
 	k11pm[0] = 20; k11pm[1] = 20;   k11pm[2] = 20;   k11pm[3] = .2; k11pm[4] = .2; k11pm[5] = 1; k11pm[6] = .2; k11pm[7] = .2; k11pm[8] = 10; k11pm[9] = .2; k11pm[10] = .2;
 	double nlArray[6]; //http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
 		nlArray[0] = 1e5; // maxIts
-		nlArray[1] = 6; // max time sec
+		nlArray[1] = 60; // max time sec
 		nlArray[3] = 1e-9; // min fun val
 		nlArray[4] = 1e-9; // tol fun
 		nlArray[5] = 1e-9; //tol x
@@ -103,28 +99,34 @@ void main() {
 
 	double fmin = 100;
 	int ret = 0;
-	double qps0[5];for (int i = 0; i < 5; i++) { qps0[i] = 0; }
-	ret = funIP_xyzdotu11A(nrows, stackedQ, stackedU, stackedX, qps0, k110, &fmin);	printf("val0 = %f\n", fmin);
-	ret = funIP_xyzpp11A(nrows, stackedQ, stackedU, stackedX, qps0, k110, &fmin);	printf("val0 = %f\n", fmin);
+	double qps0[5];
+	//for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+	qps0[0] = 0; qps0[1] = 0; qps0[2] = 0; qps0[3] = 1; qps0[4] = 100;
 
-	//ret = estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(nrows, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, &fmin);
+	ret = funIP_xyzdotu11A(nb, stackedQ, stackedU, stackedX, qps0, k110, &fmin);	printf("val0 = %f\n", fmin);
+	ret = funIP_xyzpp11A(nb, stackedQ, stackedU, stackedX, qps0, k110, &fmin);	printf("val0 = %f\n", fmin);
+
+	//ret = estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(nb, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, &fmin);
 	//printf("ret %d  fmin %f\n", ret, fmin);
 	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
 	for (int i = 0; i < 11; i++) { k11up[i] = k110[i] + k11pm[i]; k11dn[i] = k110[i] - k11pm[i]; }
-	ret = estimatePmsQ_IPNLOpt_xyzdotu11A(nrows, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, qps0, k110, &fmin);
+	ret = estimatePmsQ_IPNLOpt_xyzdotu11A(nb, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, qps0, k110, &fmin);
 	printf("ret %d  fmin %f\n\n", ret, fmin);
 	//for (int i = 0; i < 5; i++) { qps0[i] = 0; }
 	//for (int i = 0; i < 11; i++) { k11up[i] = k110[i] + k11pm[i]; k11dn[i] = k110[i] - k11pm[i]; }
-	//ret = estimatePmsQ_IPNLOpt_xyzpp11A(nrows, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, qps0, k110, &fmin);
+	//ret = estimatePmsQ_IPNLOpt_xyzpp11A(nb, stackedQ, stackedU, stackedX, k11up, k11dn, q0Array, nlArray, qps0, k110, &fmin);
 	//printf("ret %d  fmin %f\n", ret, fmin);
 
+
+	delete[] buffer; //everybody do your share
+	delete[] stackedQ;
+	//*/
 
 	std::cout << "\n\nPress Enter";
 	std::getchar();
 	printf("done\n");
 
-	delete[] buffer; //everybody do your share
-	delete[] stackedQ;
+	
 }
 
 
