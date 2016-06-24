@@ -1,4 +1,4 @@
-% This class creates an inter2D model and provides for generating trajectories, solving the kinematics, and plotting the results
+% This class creates an inter2D with an 11 parameter kinematic model
 % Frames:
 % 0 - Global reference, X directed along proximal segment, Z upward
 % 1 - 

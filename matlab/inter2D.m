@@ -1,6 +1,8 @@
-% This class creates an inter2D model and provides for generating trajectories, solving the kinematics, and plotting the results
+% This parent class contains general functions that are independent of the kinematic modeling
 classdef inter2D
-  
+    properties(GetAccess = 'public', SetAccess = 'private')
+        drw;    %measurments of the 3D printed parts from the solid model        
+    end
     properties(GetAccess = 'public', SetAccess = 'public')
         pms;    %kinematic params
         eps;    %Numeric Jacobian delta
@@ -24,15 +26,24 @@ classdef inter2D
             obj.maxIts = 1e2;
             obj.errTol = 1e-2;
             obj.factor = 1;
-            obj.qp0 = .1*ones(5,1);
+            obj.qp0 = 0*ones(5,1);
             obj.jlims.up = [pi,1,pi,5,300];
             obj.jlims.dn = [-pi,-1,-pi,1e-3,1];
 
             obj.opts = optimset('fmincon');
             obj.opts.Display = 'off';
+            
+            %lengths taken from kinematicFrames.png
+            obj.drw.lProx = 25.50;  %[mm] distance from proximal's proximal face to pitch axis
+            obj.drw.lPtch = 11.03;  %[mm] distance from pitch axis to roll's proximal face
+            obj.drw.lRoll = 12.49;  %[mm] distance from roll's proximal face to roll distal edge
+            obj.drw.rProx = 6.00;   %[mm] radius of proximal, pitch, and roll
+            obj.drw.lCath = 95;     %[mm]
+            obj.drw.rCath = 3.175;  %[mm] 
         end
+        
         function H = forwardK(obj, x ) %#ok<INUSD>
-            warning('Matlab:inter2D','forwardK is only found in the children');
+            warning('Matlab:inter2D','This parent class does not contain a particular kinematic model; instantiate a child instead.');
             H = eye(4);
         end
             
@@ -124,9 +135,14 @@ classdef inter2D
             errSum = errSum/n;
         end
         
-%---kinematic parameter search---
+%---kinematic parameter search function---
         %res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
         function res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
+            qp0 = reshape(qp0, obj.nums.qps, 1);
+            qpPM = reshape(qpPM, obj.nums.qps, 1);
+            pm0 = reshape(pm0, obj.nums.pms, 1);
+            pmPM = reshape(pmPM, obj.nums.pms, 1);
+            
             x0 = [qp0;pm0];
             xp = [qp0 + qpPM; pm0 + pmPM];
             xn = [qp0 - qpPM; pm0 - pmPM];
@@ -223,7 +239,7 @@ classdef inter2D
         % cathPts = [ [base],...[x;y;z;1],...[tip] ]
         function cathPts = xyzCathPts(obj,qp)
             [H01,H02,H03,H04,H05] = obj.forwardK( qp );
-            r = obj.cathL/qp(4); %radius of catheter arc
+            r = obj.lCath/qp(4); %radius of catheter arc
             cathPts = [ H03* [0;0;0;1], ...
                   H03* obj.Ty(r*(1-cos(qp(4)*.1)))*obj.Tx(r*sin(qp(4)*.1))*obj.Rz(qp(4)*.1)*[0;0;0;1], ...
                   H03* obj.Ty(r*(1-cos(qp(4)*.2)))*obj.Tx(r*sin(qp(4)*.2))*obj.Rz(qp(4)*.2)*[0;0;0;1], ...
@@ -236,33 +252,55 @@ classdef inter2D
                   H03* obj.Ty(r*(1-cos(qp(4)*.9)))*obj.Tx(r*sin(qp(4)*.9))*obj.Rz(qp(4)*.9)*[0;0;0;1], ...
                   H03* obj.Ty(r*(1-cos(qp(4)*1.)))*obj.Tx(r*sin(qp(4)*1.))*obj.Rz(qp(4)*1.)*[0;0;0;1] ];
         end
-        
-        function drawConfig(obj, qps )
-            [h01,h02,h03,h04,h05] = obj.forwardK(qps);
+         
+        function drawConfig(obj, qps, lcol )
+            if nargin < 3;
+                lcol = [1,1,1];
+            end
             
-            %proximal: rectangles in local xy and xz, starting at h01 (pitch axis)
-            hxyTR = h01*obj.Ty(6); hxyTL = h01*obj.Ty(6)*obj.Tx(-30); hxyBL = h01*obj.Ty(-6)*obj.Tx(-30); hxyBR = h01*obj.Ty(-6);
-            xy = [h01(1:3,4), hxyTR(1:3,4), hxyTL(1:3,4), hxyBL(1:3,4), hxyBR(1:3,4), h01(1:3,4) ];
-            plot3(xy(1,:), xy(2,:), xy(3,:), '-b');
-            hxzTR = h01*obj.Tz(6); hxzTL = h01*obj.Tz(6)*obj.Tx(-30); hxzBL = h01*obj.Tz(-6)*obj.Tx(-30); hxzBR = h01*obj.Tz(-6);
-            xz = [h01(1:3,4), hxzTR(1:3,4), hxzTL(1:3,4), hxzBL(1:3,4), hxzBR(1:3,4), h01(1:3,4) ];
-            plot3(xz(1,:), xz(2,:), xz(3,:), '-b');
-            %pitch: rectangles in local xy and xz between pitch axis and roll axis
-            lPitch = 4;
-            hxyTL = h02*obj.Ty(6); hxyTR = h02*obj.Ty(6)*obj.Tx(lPitch); hxyBR = h02*obj.Ty(-6)*obj.Tx(lPitch); hxyBL = h02*obj.Ty(-6);
-            xy = [h02(1:3,4), hxyTL(1:3,4), hxyTR(1:3,4), hxyBR(1:3,4), hxyBL(1:3,4), h02(1:3,4)];
-            plot3(xy(1,:), xy(2,:), xy(3,:), '-c');
-            hxzTL = h02*obj.Tz(6); hxzTR = h02*obj.Tz(6)*obj.Tx(lPitch); hxzBR = h02*obj.Tz(-6)*obj.Tx(lPitch); hxzBL = h02*obj.Tz(-6);
-            xz = [h02(1:3,4), hxzTL(1:3,4), hxzTR(1:3,4), hxzBR(1:3,4), hxzBL(1:3,4), h02(1:3,4)];
-            plot3(xz(1,:), xz(2,:), xz(3,:), '-c');
-            %roll: rectangles in local xy and xz from the roll axis to the catheter start
-            lRoll = 8.2-lPitch;
-            hxyTL = h03*obj.Ty(6); hxyTR = h03*obj.Ty(6)*obj.Tx(lRoll); hxyBR = h03*obj.Ty(-6)*obj.Tx(lRoll); hxyBL = h03*obj.Ty(-6);
-            xy = [h03(1:3,4), hxyTL(1:3,4), hxyTR(1:3,4), hxyBR(1:3,4), hxyBL(1:3,4), h03(1:3,4)];
-            plot3(xy(1,:), xy(2,:), xy(3,:), '-g');
-            hxzTL = h03*obj.Tz(6); hxzTR = h03*obj.Tz(6)*obj.Tx(lRoll); hxzBR = h03*obj.Tz(-6)*obj.Tx(lRoll); hxzBL = h03*obj.Tz(-6);
-            xz = [h03(1:3,4), hxzTL(1:3,4), hxzTR(1:3,4), hxzBR(1:3,4), hxzBL(1:3,4), h03(1:3,4)];
-            plot3(xz(1,:), xz(2,:), xz(3,:), '-g');
+            [h01,h02,h03,h04,h05] = obj.forwardK(qps);
+            col = [0;0;0;1]; %H*col = XYZ1
+            
+            %01 too large
+            %12
+            xyz = [ h01*col, h01*obj.Ty( obj.drw.rProx)*col, h01*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
+                    h01*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Ty(-obj.drw.rProx)*col, h01*col,h02*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            xyz = [ h01*col, h01*obj.Tz( obj.drw.rProx)*col, h01*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
+                    h01*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Tz(-obj.drw.rProx)*col, h01*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-b', 'color', lcol*.7);
+            %23
+            xyz = [ h02*col, h02*obj.Ty( obj.drw.rProx)*col, h02*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
+                    h02*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Ty(-obj.drw.rProx)*col, h02*col,h03*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            xyz = [ h02*col, h02*obj.Tz( obj.drw.rProx)*col, h02*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
+                    h02*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Tz(-obj.drw.rProx)*col, h02*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            %34
+            qps(4) = qps(4) + obj.qp0(4);
+            if qps(4) < 1e-3; qps(4) = 1e-3; end;
+            r = obj.pms.lCath/qps(4); %radius of catheter arc
+            h3 = h03*obj.Tx(obj.drw.lRoll);
+            cathPts = [ h3*col, h03*obj.Tz(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h03*obj.Tz(obj.drw.rCath)*col,...
+                        h03*col,h03*obj.Ty(obj.drw.rCath)*col, h03*obj.Ty(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h3*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.1)))*obj.Tx(r*sin(qps(4)*.1))*obj.Rz(qps(4)*.1)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.2)))*obj.Tx(r*sin(qps(4)*.2))*obj.Rz(qps(4)*.2)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.3)))*obj.Tx(r*sin(qps(4)*.3))*obj.Rz(qps(4)*.3)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.4)))*obj.Tx(r*sin(qps(4)*.4))*obj.Rz(qps(4)*.4)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.5)))*obj.Tx(r*sin(qps(4)*.5))*obj.Rz(qps(4)*.5)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.6)))*obj.Tx(r*sin(qps(4)*.6))*obj.Rz(qps(4)*.6)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.7)))*obj.Tx(r*sin(qps(4)*.7))*obj.Rz(qps(4)*.7)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.8)))*obj.Tx(r*sin(qps(4)*.8))*obj.Rz(qps(4)*.8)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*.9)))*obj.Tx(r*sin(qps(4)*.9))*obj.Rz(qps(4)*.9)*col, ...
+            h3* obj.Ty(r*(1-cos(qps(4)*1.)))*obj.Tx(r*sin(qps(4)*1.))*obj.Rz(qps(4)*1.)*col ];
+            plot3( cathPts(1,:),cathPts(2,:),cathPts(3,:), '.-', 'color', lcol*1);
+            
+            %45
+            xyz = [ h04*col, h05*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            xyz = [ h04*col, h05*col];
+            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            
         end
 
     end %dynamic methods
