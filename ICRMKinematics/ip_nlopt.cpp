@@ -1,8 +1,8 @@
 #include "ip_nlopt.h"
 #include <iostream>
 
-//nlopt complains if a member of InvP11
-double funIPUX11A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
+double funIP11A_qp0pm0_xyzdotu(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
+	//nlopt complains if a member of InvP11
 
 	FIPDATA *pfip;
 	pfip = (FIPDATA*)fipData;
@@ -77,7 +77,7 @@ InvPNLOpt_xyzdotu11A::InvPNLOpt_xyzdotu11A(KINEMATICPARAMS11A kup, KINEMATICPARA
 	q0Lims = q0;
 	nlParams = nl;
 }
-void InvPNLOpt_xyzdotu11A::funIP_UX11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
+void InvPNLOpt_xyzdotu11A::fun_qp0pm0_xyzdotu(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
 	FIPDATA fip;
 	fip.nSamps = (const int)nSamps;
 	fip.stackedQ = stackedQ;
@@ -88,56 +88,9 @@ void InvPNLOpt_xyzdotu11A::funIP_UX11A(int nSamps, double *stackedQ, double *sta
 	for (int i = 0; i < 5; i++) { x[i] = qps0[i]; }
 	for (int i = 0; i < 11; i++) { x[i+5] = pms0[i]; }
 
-	*fmin = funIPUX11A(x, x, &fip);
+	*fmin = funIP11A_qp0pm0_xyzdotu(x, x, &fip);
 }
-int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *fmin) {
-	//set boundary constraints based on qpLast and stdev
-	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
-	//x = [q0,q1,q2,q3,q4, tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
-	std::vector<double> limup(5 + 11);
-	std::vector<double> limdn(5 + 11);
-	for (int i = 0; i < 5; i++) {
-		limup[i] = q0Lims.up[i];
-		limdn[i] = q0Lims.dn[i];
-	}
-	limup[5] = k11up.tx01;
-	limup[6] = k11up.ty01;
-	limup[7] = k11up.tz01;
-	limup[8] = k11up.ry01;
-	limup[9] = k11up.rz01;
-	limup[10] = k11up.tx23;
-	limup[11] = k11up.ry34;
-	limup[12] = k11up.rz34;
-	limup[13] = k11up.cathL;
-	limup[14] = k11up.ry45;
-	limup[15] = k11up.rz45;
-	limdn[5] = k11dn.tx01;
-	limdn[6] = k11dn.ty01;
-	limdn[7] = k11dn.tz01;
-	limdn[8] = k11dn.ry01;
-	limdn[9] = k11dn.rz01;
-	limdn[10] = k11dn.tx23;
-	limdn[11] = k11dn.ry34;
-	limdn[12] = k11dn.rz34;
-	limdn[13] = k11dn.cathL;
-	limdn[14] = k11dn.ry45;
-	limdn[15] = k11dn.rz45;
-
-	// set start x to be within bounds
-	double x0[5 + 11];
-	for (int i = 0; i < 5 + 11; i++) {
-		x0[i] = (limup[i] - limdn[i]) / 2 + limdn[i];
-		if (x0[i] <= limdn[i]) {
-			x0[i] = limdn[i];
-		}
-		if (limup[i] <= x0[i]) {
-			x0[i] = limup[i];
-		}
-	}
-
-	return estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
-}
-int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *x0, double *fmin) {
+int InvPNLOpt_xyzdotu11A::estimate_qp0pm0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *x0, double *fmin) {
 	int ret = -99;
 	printf("Starting Inverse Parameter Search from\nq0[%f,%f,%f,%f,%f]\nk0[",x0[0],x0[1],x0[2],x0[3],x0[4]);
 	for (int i = 0; i < 11; i++) { printf("%f,", x0[i + 5]); }; printf("]\n");
@@ -153,7 +106,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	// set objective
 	void *pfip;
 	pfip = &fip;
-	alg.set_min_objective(funIPUX11A, pfip);
+	alg.set_min_objective(funIP11A_qp0pm0_xyzdotu, pfip);
 
 	// set initial step size (only used by nongradient methods)
 
@@ -214,7 +167,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
 		nlopt::opt lAlg( nlopt::LN_NELDERMEAD, alg.get_dimension());
 
-		lAlg.set_min_objective(funIPUX11A, pfip);
+		lAlg.set_min_objective(funIP11A_qp0pm0_xyzdotu, pfip);
 		lAlg.set_upper_bounds(limup);
 		lAlg.set_lower_bounds(limdn);
 		lAlg.set_stopval(nlParams.minFunVal);
@@ -435,7 +388,7 @@ int InvPNLOpt_xyzpp11A::estimate(int nSamps, double *stackedQ, double *stackedU,
 	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
 		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
 
-		lAlg.set_min_objective(funIPUX11A, pfip);
+		lAlg.set_min_objective(funIP11A_qp0pm0_xyzdotu, pfip);
 		lAlg.set_upper_bounds(limup);
 		lAlg.set_lower_bounds(limdn);
 		lAlg.set_stopval(nlParams.minFunVal);

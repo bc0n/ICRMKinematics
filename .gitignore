@@ -222,3 +222,10 @@ ICRMKinematics.VC.db
 ICRMKinematics.VC.db
 ICRMKinematics.VC.db
 compareIKSolutionStability/testSquareQps.dat
+*.vcxproj
+compareIKSolutionStability/compareIKSolutionStability.vcxproj
+*.asv
+matlab/i2dll_thunk_pcwin64.lib
+matlab/i2dll_thunk_pcwin64.dll
+intoLV/kinematicsDLL.h
+intoLV/ICRMKinematics.dll

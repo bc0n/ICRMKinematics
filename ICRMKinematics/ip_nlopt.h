@@ -37,9 +37,8 @@ private:
 public:
 	InvPNLOpt_xyzdotu11A();
 	InvPNLOpt_xyzdotu11A(KINEMATICPARAMS11A k11up, KINEMATICPARAMS11A k11dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_UX11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
-	int estimate(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *fmin);
-	int estimate(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *x0, double *fmin);
+	void fun_qp0pm0_xyzdotu(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
+	int estimate_qp0pm0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *x0, double *fmin);
 };
 class InvPNLOpt_xyzpp11A {
 private:

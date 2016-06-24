@@ -1,6 +1,18 @@
+
+#include "kinematics_structs.h"
+#include "forwardKinematics.h"
+#include "taskDefinitions.h"
+#include "ik_nlopt.h"
+#include "ip_nlopt.h" // must include these before the dll
 #include "kinematicsDLL.h"
 #include <iostream>
 
+//likewise moved from dll.h to here for dll.h simplicity
+KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
+KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
+//NEWTONPARAMS nrArray2Struct(double *nrArray);
+NLOPTPARAMS nlArray2Struct(double *nlArray);
+JOINTLIMITS jntArray2Struct(double *jntArray);
 
 // wrap forwardK
 DLLIMPORT int get6AH01(double *qps, double *kinArray, double *arrayH01) {
@@ -235,12 +247,17 @@ DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double 
 }
 
 // wrap inverse parameter solvers
-DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
+//DLLIMPORT int funIP11A_pm0_xyz(int nSamps, double *stackedQ, double *stackedX, double *qps0, double *pms0, double *fmin) {
+//	InvPNLOpt_xyzdotu11A ip;
+//	ip.fun_pm0_xyzdotu(nSamps, stackedQ, stackedX, qps0, pms0, fmin);
+//	return 0;
+//}
+DLLIMPORT int funIP11A_qp0pm0_xyzdotu(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
 	InvPNLOpt_xyzdotu11A ip;
-	ip.funIP_UX11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
+	ip.fun_qp0pm0_xyzdotu(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
 	return 0;
 }
-DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin) {
+DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *fmin) {
 	int ret = -99;
 
 	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
@@ -249,7 +266,7 @@ DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stack
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
 	InvPNLOpt_xyzdotu11A ip(kp11up, kp11dn, q0pLims, nlParams);
-	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, fmin);
+	ret = ip.estimate_qp0pm0(nSamps, stackedQ, stackedU, stackedX, qps0, fmin);
 	
 	return ret;
 }
@@ -266,7 +283,7 @@ DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, doub
 	for (int i = 0; i < 5; i++) { x0[i] = qps0[i]; }
 	for (int i = 0; i < 11; i++) { x0[i+5] = kps0[i]; }
 
-	ret = ip.estimate(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
+	ret = ip.estimate_qp0pm0(nSamps, stackedQ, stackedU, stackedX, x0, fmin);
 
 	for (int i = 0; i < 5; i++) { qps0[i] = x0[i]; }
 	for (int i = 0; i < 11; i++) { kps0[i] = x0[i + 5]; }

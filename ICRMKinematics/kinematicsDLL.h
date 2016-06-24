@@ -3,11 +3,11 @@
 #ifndef CICRM
 #define CICRM
 
-#include "kinematics_structs.h"
-#include "forwardKinematics.h"
-#include "taskDefinitions.h"
-#include "ik_nlopt.h"
-#include "ip_nlopt.h"
+//#include "kinematics_structs.h" //moved to the cpp so that this header can be included in matlab's load library
+//#include "forwardKinematics.h"
+//#include "taskDefinitions.h"
+//#include "ik_nlopt.h"
+//#include "ip_nlopt.h"
 
 // building a DLL
 #define DLLIMPORT __declspec (dllexport)
@@ -54,9 +54,10 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz);
 
 	//inverse paramameter estimators
-	DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
+	//DLLIMPORT int funIP11A_pm0_xyz(int nSamps, double *stackedQ, double *stackedX, double *qps0, double *pms0, double *fmin);
+	DLLIMPORT int funIP11A_qp0pm0_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 	//assumes qps0 = 0 and kpms0 are centered between up&dn
-	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *fmin);
 	//uses the given qps0 and kpms0
 	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin);
 	DLLIMPORT int funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
@@ -66,10 +67,10 @@ extern "C" { // using a C++ compiler
 }
 #endif
 
-KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
-KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
-//NEWTONPARAMS nrArray2Struct(double *nrArray);
-NLOPTPARAMS nlArray2Struct(double *nlArray);
-JOINTLIMITS jntArray2Struct(double *jntArray);
+//KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
+//KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
+////NEWTONPARAMS nrArray2Struct(double *nrArray);
+//NLOPTPARAMS nlArray2Struct(double *nlArray);
+//JOINTLIMITS jntArray2Struct(double *jntArray);
 
 #endif //CICRM
