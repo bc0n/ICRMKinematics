@@ -31,7 +31,11 @@ classdef inter2D
             obj.opts = optimset('fmincon');
             obj.opts.Display = 'off';
         end
-        
+        function H = forwardK(obj, x ) %#ok<INUSD>
+            warning('Matlab:inter2D','forwardK is only found in the children');
+            H = eye(4);
+        end
+            
 %---task funs---
         function task = taskXYZ(obj, H) %#ok<INUSL>
             task = H(1:3,4);
@@ -42,15 +46,32 @@ classdef inter2D
         function task = taskXYZPP(obj, H)
             task = obj.H2xyzpp( H );
         end
+
+        %these use downward calls to the inheriting FKs, reconsider or make  a useless i2d FK?
+        function fun = funTaskXYZ(obj)
+            fun = @(x)(obj.taskXYZ( obj.forwardK( x ))); %forwardK() is only found in the inheritors..should rearrange this
+        end
+        function fun = funTaskXYZUxUyUz(obj)
+            fun = @(x)(obj.taskXYZUxUyUz( obj.forwardK( x ))); %forwardK() is only found in the inheritors..should rearrange this
+        end
+        function fun = funTaskXYZPP(obj)
+            fun = @(x)(obj.taskXYZPP( obj.forwardK( x ))); %forwardK() is only found in the inheritors..should rearrange this
+        end
         
         %Compute the numeric Jacobian for taskFun about operating point qp
         function J = numQJ(obj,qp,taskFun)
-            J = [ taskFun([qp(1)+obj.dt, qp(2), qp(3), qp(4), qp(5)]) - taskFun([qp(1)-obj.dt, qp(2), qp(3), qp(4), qp(5)]), ...
-                  taskFun([qp(1), qp(2)+obj.dt, qp(3), qp(4), qp(5)]) - taskFun([qp(1), qp(2)-obj.dt, qp(3), qp(4), qp(5)]), ...
-                  taskFun([qp(1), qp(2), qp(3)+obj.dt, qp(4), qp(5)]) - taskFun([qp(1), qp(2), qp(3)-obj.dt, qp(4), qp(5)]), ...
-                  taskFun([qp(1), qp(2), qp(3), qp(4)+obj.dt, qp(5)]) - taskFun([qp(1), qp(2), qp(3), qp(4)-obj.dt, qp(5)]), ...
-                  taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)+obj.dt]) - taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)-obj.dt]) ] /2/obj.dt;
+            J = [ taskFun([qp(1)+obj.eps, qp(2), qp(3), qp(4), qp(5)]) - taskFun([qp(1)-obj.eps, qp(2), qp(3), qp(4), qp(5)]), ...
+                  taskFun([qp(1), qp(2)+obj.eps, qp(3), qp(4), qp(5)]) - taskFun([qp(1), qp(2)-obj.eps, qp(3), qp(4), qp(5)]), ...
+                  taskFun([qp(1), qp(2), qp(3)+obj.eps, qp(4), qp(5)]) - taskFun([qp(1), qp(2), qp(3)-obj.eps, qp(4), qp(5)]), ...
+                  taskFun([qp(1), qp(2), qp(3), qp(4)+obj.eps, qp(5)]) - taskFun([qp(1), qp(2), qp(3), qp(4)-obj.eps, qp(5)]), ...
+                  taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)+obj.eps]) - taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)-obj.eps]) ] /2/obj.eps;
         end %numJ
+        
+        %Compute the manipulability of the given Jacobian at the given qp
+        function m = numManip(obj, qp, taskFun )
+            numJ = obj.numQJ( qp, taskFun );
+            m = sqrt( det( numJ * numJ' ));
+        end
         
         
 %---kinematic parameter error functions---
@@ -142,11 +163,38 @@ classdef inter2D
         end
 
 %---inverse kinematic error functions
+        function err = errQps_xyz( obj, qps, goalXYZ )
+            err = norm(goalXYZ - obj.taskXYZ( obj.forwardK(qps) ));            
+        end
+        
         function err = errQps_xyzuxuyuz( obj, qps, goalXYZUxUyUz )
             err = norm(goalXYZUxUyUz - obj.taskXYZUxUyUz( obj.forwardK(qps) ));            
         end
         
 %---inverse kinematic search---
+        % res = findQps_xyz(obj, qp0, goalXYZ)
+        function res = findQps_xyz(obj, qp0, goalXYZ)
+            goalXYZ = reshape(goalXYZ, 3,1);
+            qp0 = reshape(qp0,5,1);
+            
+            x0 = qp0;
+            xn = obj.jlims.dn;
+            xp = obj.jlims.up;
+            
+            fun = @(x)obj.errQps_xyz( x, goalXYZ);
+            
+            tic
+            [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
+            res.telapsed = toc;
+            
+            res.qps = out.x(1:obj.nums.qps);
+            res.H = obj.forwardK( res.qps );
+            res.fval = out.f;
+            res.flag = out.flag;
+            res.msg = out.message;
+            res.goal = goalXYZ;
+        end
+
         %res = findQps_xyzuxuyuz(obj, qp0, goalXYZUxUyUz)
         function res = findQps_xyzuxuyuz(obj, qp0, goalXYZUxUyUz)
             goalXYZUxUyUz = reshape(goalXYZUxUyUz, 6,1);
