@@ -1,13 +1,13 @@
 #include "forwardKinematics.h"
 #include <iostream>
 
-FwdK6A::FwdK6A() {
+FwdK5A::FwdK5A() {
 }
-FwdK6A::FwdK6A(KINEMATICPARAMS6A inParams) {
+FwdK5A::FwdK5A(KINEMATICPARAMS5A inParams) {
 	kinParams = inParams;
 }
-Eigen::Matrix4d FwdK6A::qps2H01(double *qps) {
-	//printf("kinParams = [%f %f %f %f %f %f]\n", kinParams.cathL, kinParams.rz01, kinParams.tx01, kinParams.ty01, kinParams.tz01, kinParams.tx23);
+Eigen::Matrix4d FwdK5A::qps2H01(double *qps) {
+	//printf("kinParams = [%f %f %f %f %f]\n", kinParams.tx01, kinParams.ty01, kinParams.tz01, kinParams.rz01, kinParams.lCath);
 
 	Eigen::Matrix4d Txyz;
 	Txyz.setIdentity();
@@ -28,28 +28,29 @@ Eigen::Matrix4d FwdK6A::qps2H01(double *qps) {
 
 	return H01;
 }
-Eigen::Matrix4d FwdK6A::qps2H02(double *qps) {
+Eigen::Matrix4d FwdK5A::qps2H02(double *qps) {
 	Eigen::Matrix3d R;
 	Eigen::Matrix4d Rxyz;
-
+	
 	R = Eigen::AngleAxisd(qps[1], Eigen::Vector3d::UnitZ());
 	Rxyz.setIdentity();
 	Rxyz.block<3, 3>(0, 0) = R;
+	Rxyz(0, 3) = physicalDims.lProx; // translate from the coaxial input to the pitch axis
 
-	return FwdK6A::qps2H01(qps) * Rxyz;
+	return FwdK5A::qps2H01(qps) * Rxyz;
 }
-Eigen::Matrix4d FwdK6A::qps2H03(double *qps) {
+Eigen::Matrix4d FwdK5A::qps2H03(double *qps) {
 	Eigen::Matrix3d R;
 	Eigen::Matrix4d Rxyz;
 
 	R = Eigen::AngleAxisd(qps[2], Eigen::Vector3d::UnitX());
 	Rxyz.setIdentity();
-	Rxyz(0, 3) = kinParams.tx23; //Tx
+	Rxyz(0, 3) = physicalDims.lPtch; // translate from the ptich axis to the roll face
 	Rxyz.block<3, 3>(0, 0) = R;
 
-	return FwdK6A::qps2H02(qps) * Rxyz;
+	return FwdK5A::qps2H02(qps) * Rxyz;
 }
-Eigen::Matrix4d FwdK6A::qps2H04(double *qps) {
+Eigen::Matrix4d FwdK5A::qps2H04(double *qps) {
 	Eigen::Matrix3d R;
 	Eigen::Matrix4d Rxyz;
 
@@ -63,19 +64,19 @@ Eigen::Matrix4d FwdK6A::qps2H04(double *qps) {
 
 	R = Eigen::AngleAxisd(qps[3], Eigen::Vector3d::UnitZ());
 	Rxyz.setIdentity();
-	Rxyz(0, 3) = tx;
+	Rxyz(0, 3) = tx + physicalDims.lRoll; // translate the to the catheter base, then x,y,rotate
 	Rxyz(1, 3) = ty;
 	Rxyz.block<3, 3>(0, 0) = R;
 
-	return FwdK6A::qps2H03(qps) * Rxyz;
+	return FwdK5A::qps2H03(qps) * Rxyz;
 }
-Eigen::Matrix4d FwdK6A::qps2H05(double *qps) {
+Eigen::Matrix4d FwdK5A::qps2H05(double *qps) {
 	Eigen::Matrix4d Rxyz;
 	Eigen::Matrix4d H05;
 
 	Rxyz.setIdentity();
-	Rxyz(0, 3) = qps[4]; //Tx
+	Rxyz(0, 3) = qps[4]; // translate the virtual distance
 
-	return FwdK6A::qps2H04(qps) * Rxyz;
+	return FwdK5A::qps2H04(qps) * Rxyz;
 }
 

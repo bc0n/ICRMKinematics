@@ -19,6 +19,13 @@ extern "C" { // using a C++ compiler
 	typedef struct kinematics kinematics; //make class opaque to the wrapper---why do we want this?
 	DLLIMPORT kinematics* createKinematics(void);
 
+
+	DLLIMPORT int get5AH01(double *qps, double *kinArray, double *arrayH01);
+	DLLIMPORT int get5AH02(double *qps, double *kinArray, double *arrayH02);
+	DLLIMPORT int get5AH03(double *qps, double *kinArray, double *arrayH03);
+	DLLIMPORT int get5AH04(double *qps, double *kinArray, double *arrayH04);
+	DLLIMPORT int get5AH05(double *qps, double *kinArray, double *arrayH05);
+
 	DLLIMPORT int get6AH01(double *qps, double *kinArray, double *arrayH01);
 	DLLIMPORT int get6AH02(double *qps, double *kinArray, double *arrayH02);
 	DLLIMPORT int get6AH03(double *qps, double *kinArray, double *arrayH03);
@@ -27,6 +34,7 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05);
 
 	//taskDefinitions --- expanded to encompass each FwdK and Task template variant
+	DLLIMPORT int getTask5A_xyz(double *qps, double *kinArray, double *xyz);
 	DLLIMPORT int getTask6A_xyz(double *qps, double *kinArray, double *xyz);
 	DLLIMPORT int getTask11A_xyz(double *qps, double *kinArray, double *xyz);
 	DLLIMPORT int getTask6A_phiPsi(double *qps, double *kinArray, double *pp);
@@ -48,12 +56,17 @@ extern "C" { // using a C++ compiler
 	//          4 = x tol reached
 	//          5 = max evals
 	//          6 = max time reached
-	DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz);
-	DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz);
-	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz);
-	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz);
+	DLLIMPORT int getQps_IKnlopt_xyz5A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
+	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
 
-	//inverse paramameter estimators
+	//inverse paramameter estimation
+	DLLIMPORT int funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	DLLIMPORT int estimate_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *nlArray, double *fmin);
+
+	//simultaneous inverse parameter and initial joint estimation
 	DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 	//assumes qps0 = 0 and kpms0 are centered between up&dn
 	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin);
@@ -62,13 +75,16 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin);
 
+
+
 #ifdef __cplusplus
 }
 #endif
 
+KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray);
 KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
 KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
-//NEWTONPARAMS nrArray2Struct(double *nrArray);
+
 NLOPTPARAMS nlArray2Struct(double *nlArray);
 JOINTLIMITS jntArray2Struct(double *jntArray);
 

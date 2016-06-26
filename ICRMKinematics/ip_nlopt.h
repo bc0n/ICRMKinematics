@@ -55,3 +55,14 @@ public:
 	int estimate(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *x0, double *fmin);
 };
 
+class IPnlopt_kn0_xyz5A {
+private:
+	KINEMATICPARAMS5A k5up;
+	KINEMATICPARAMS5A k5dn;
+	NLOPTPARAMS nlParams;
+public:
+	IPnlopt_kn0_xyz5A();
+	IPnlopt_kn0_xyz5A(KINEMATICPARAMS5A k5up, KINEMATICPARAMS5A k5dn, NLOPTPARAMS nlParams);
+	void funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	int estimate(int nSamps, double *stackedQ, double *stackedX, double *x0, double *fmin);
+};

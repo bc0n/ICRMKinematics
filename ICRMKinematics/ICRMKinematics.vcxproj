@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="forwardK11A.cpp" />
+    <ClCompile Include="forwardK5A.cpp" />
     <ClCompile Include="forwardK6A.cpp" />
     <ClCompile Include="ik_nlopt.cpp" />
     <ClCompile Include="ip_nlopt.cpp" />

@@ -11,8 +11,22 @@ double funIK_normTask(const std::vector<double> &x, std::vector<double> &grad, v
 	double qps[5] = { x[0],x[1],x[2],x[3],x[4] };
 
 	//find the current candidate's error
-	return (*(pfdata->task)).qps2taskError(qps, pfdata->target);
+	double err = (*(pfdata->task)).qps2taskError(qps, pfdata->target);
 
+	//gradient requested, return the numeric gradient about the candidate.
+	//Since fact is constant this is probably inferior to step-choosing in the derivative free algs.
+	double fact = 1e-12; //if nlopt::optimize returns -1, probably due to tolStep|tolFun < fact
+	if (!grad.empty()) {
+		for (int i = 0; i < 5; i++) {
+			qps[i] = x[i] + fact;
+			grad[i] = (*(pfdata->task)).qps2taskError(qps, pfdata->target);
+			qps[i] = x[i] - fact;
+			grad[i] -= (*(pfdata->task)).qps2taskError(qps, pfdata->target);
+			grad[i] /= fact;
+		}
+	}
+	
+	return err;
 }
 
 // constructor receives the fk parameters through the templated fkArg
@@ -24,7 +38,7 @@ InvK_nlopt<TASK,TFK>::InvK_nlopt(TFK fkArg, JOINTLIMITS jlArg, NLOPTPARAMS nlArg
 }
 
 template <class TASK, class TFK>
-int InvK_nlopt<TASK, TFK>::solve(double *qps, double *xyz){
+int InvK_nlopt<TASK, TFK>::solve(double *qps, double *xyz, double *fmin){
 	int ret = -1;
 
 	//prep algorithm
@@ -90,11 +104,11 @@ int InvK_nlopt<TASK, TFK>::solve(double *qps, double *xyz){
 
 	// solve
 	nlopt::result res;
-	double fmin = 1e3;
+	*fmin = 1e3;
 	
 	//std::cout << "funIK@x =" << funIK_xyz<TFK>(x, x, ptr) << std::endl;
 	try {
-		res = alg.optimize(x, fmin);
+		res = alg.optimize(x, *fmin);
 	}
 	catch (nlopt::roundoff_limited e) {
 		res = nlopt::FAILURE;
@@ -1137,11 +1151,28 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 	case nlMethod::LN_NEWUOA_BOUND: return nlopt::LN_NEWUOA_BOUND;//16
 	case nlMethod::LN_PRAXIS: return nlopt::LN_PRAXIS;//17
 	case nlMethod::LN_SBPLX: return nlopt::LN_SBPLX;//18
+
+	case nlMethod::GD_MLSL: return nlopt::GD_MLSL;//19
+	case nlMethod::GD_MLSL_LDS: return nlopt::GD_MLSL_LDS;//20
+	case nlMethod::GD_STOGO: return nlopt::GD_STOGO;//21
+	case nlMethod::GD_STOGO_RAND: return nlopt::GD_STOGO_RAND;//22
+	case nlMethod::LD_CCSAQ: return nlopt::LD_CCSAQ;//23
+	case nlMethod::LD_LBFGS: return nlopt::LD_LBFGS;//24
+	case nlMethod::LD_LBFGS_NOCEDAL: return nlopt::LD_LBFGS_NOCEDAL;//25
+	case nlMethod::LD_MMA: return nlopt::LD_MMA;//26
+	case nlMethod::LD_TNEWTON: return nlopt::LD_TNEWTON;//27
+	case nlMethod::LD_TNEWTON_RESTART: return nlopt::LD_TNEWTON_RESTART;//28
+	case nlMethod::LD_TNEWTON_PRECOND: return nlopt::LD_TNEWTON_PRECOND;//29
+	case nlMethod::LD_TNEWTON_PRECOND_RESTART: return nlopt::LD_TNEWTON_PRECOND_RESTART;//30
+	case nlMethod::LD_VAR1: return nlopt::LD_VAR1;//31
+	case nlMethod::LD_VAR2: return nlopt::LD_VAR2;//32
+	case nlMethod::LD_SLSQP: return nlopt::LD_SLSQP;//33
 	default: return nlopt::GN_DIRECT;
 	}
 }
 
 //useless definition to help linker, one for every possible template value
+template class InvK_nlopt<TaskXYZ<FwdK5A>, FwdK5A>;
 template class InvK_nlopt<TaskXYZ<FwdK6A>, FwdK6A>;
 template class InvK_nlopt<TaskXYZ<FwdK11A>, FwdK11A>;
 template class InvK_nlopt<TaskXYZUxUyUz<FwdK6A>, FwdK6A>;

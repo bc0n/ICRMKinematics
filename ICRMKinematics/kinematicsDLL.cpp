@@ -3,6 +3,122 @@
 
 
 // wrap forwardK
+DLLIMPORT int get5AH01(double *qps, double *kinArray, double *arrayH01) {
+	int ret = -1;
+
+	FwdK5A fk(kinArray2Struct5A(kinArray));
+	Eigen::Matrix4d H01 = fk.qps2H01(qps);
+	arrayH01[0] = H01(0, 0);
+	arrayH01[1] = H01(1, 0);
+	arrayH01[2] = H01(2, 0);
+	arrayH01[3] = H01(0, 1);
+	arrayH01[4] = H01(1, 1);
+	arrayH01[5] = H01(2, 1);
+	arrayH01[6] = H01(0, 2);
+	arrayH01[7] = H01(1, 2);
+	arrayH01[8] = H01(2, 2);
+	arrayH01[9] = H01(0, 3);
+	arrayH01[10] = H01(1, 3);
+	arrayH01[11] = H01(2, 3);
+
+	ret = 0;
+
+	return ret;
+}
+DLLIMPORT int get5AH02(double *qps, double *kinArray, double *arrayH02) {
+	int ret = -1;
+
+	FwdK5A fk(kinArray2Struct5A(kinArray));
+	Eigen::Matrix4d H02 = fk.qps2H02(qps);
+
+	arrayH02[0] = H02(0, 0);
+	arrayH02[1] = H02(1, 0);
+	arrayH02[2] = H02(2, 0);
+	arrayH02[3] = H02(0, 1);
+	arrayH02[4] = H02(1, 1);
+	arrayH02[5] = H02(2, 1);
+	arrayH02[6] = H02(0, 2);
+	arrayH02[7] = H02(1, 2);
+	arrayH02[8] = H02(2, 2);
+	arrayH02[9] = H02(0, 3);
+	arrayH02[10] = H02(1, 3);
+	arrayH02[11] = H02(2, 3);
+
+	ret = 0;
+
+	return ret;
+}
+DLLIMPORT int get5AH03(double *qps, double *kinArray, double *arrayH03) {
+	int ret = -1;
+
+	FwdK5A fk(kinArray2Struct5A(kinArray));
+	Eigen::Matrix4d H03 = fk.qps2H03(qps);
+
+	arrayH03[0] = H03(0, 0);
+	arrayH03[1] = H03(1, 0);
+	arrayH03[2] = H03(2, 0);
+	arrayH03[3] = H03(0, 1);
+	arrayH03[4] = H03(1, 1);
+	arrayH03[5] = H03(2, 1);
+	arrayH03[6] = H03(0, 2);
+	arrayH03[7] = H03(1, 2);
+	arrayH03[8] = H03(2, 2);
+	arrayH03[9] = H03(0, 3);
+	arrayH03[10] = H03(1, 3);
+	arrayH03[11] = H03(2, 3);
+
+	ret = 0;
+
+	return ret;
+}
+DLLIMPORT int get5AH04(double *qps, double *kinArray, double *arrayH04) {
+	int ret = -1;
+
+	FwdK5A fk(kinArray2Struct5A(kinArray));
+	Eigen::Matrix4d H04 = fk.qps2H04(qps);
+
+	arrayH04[0] = H04(0, 0);
+	arrayH04[1] = H04(1, 0);
+	arrayH04[2] = H04(2, 0);
+	arrayH04[3] = H04(0, 1);
+	arrayH04[4] = H04(1, 1);
+	arrayH04[5] = H04(2, 1);
+	arrayH04[6] = H04(0, 2);
+	arrayH04[7] = H04(1, 2);
+	arrayH04[8] = H04(2, 2);
+	arrayH04[9] = H04(0, 3);
+	arrayH04[10] = H04(1, 3);
+	arrayH04[11] = H04(2, 3);
+
+	ret = 0;
+
+	return ret;
+}
+DLLIMPORT int get5AH05(double *qps, double *kinArray, double *arrayH05) {
+	int ret = -1;
+
+	FwdK5A fk(kinArray2Struct5A(kinArray));
+	Eigen::Matrix4d H05 = fk.qps2H05(qps);
+
+	arrayH05[0] = H05(0, 0);
+	arrayH05[1] = H05(1, 0);
+	arrayH05[2] = H05(2, 0);
+	arrayH05[3] = H05(0, 1);
+	arrayH05[4] = H05(1, 1);
+	arrayH05[5] = H05(2, 1);
+	arrayH05[6] = H05(0, 2);
+	arrayH05[7] = H05(1, 2);
+	arrayH05[8] = H05(2, 2);
+	arrayH05[9] = H05(0, 3);
+	arrayH05[10] = H05(1, 3);
+	arrayH05[11] = H05(2, 3);
+
+	ret = 0;
+	
+	return ret;
+}
+
+
 DLLIMPORT int get6AH01(double *qps, double *kinArray, double *arrayH01) {
 	int ret = -1;
 	
@@ -147,6 +263,12 @@ DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05) {
 }
 
 // wrap taskDefinitions
+DLLIMPORT int getTask5A_xyz(double *qps, double *kinArray, double *xyz) {
+	FwdK5A fk5a(kinArray2Struct5A(kinArray));
+	TaskXYZ<FwdK5A> task(fk5a);
+	task.qps2task(qps, xyz);
+	return 0;
+}
 DLLIMPORT int getTask6A_xyz(double *qps, double *kinArray, double *xyz) {
 	FwdK6A fk6a(kinArray2Struct6A(kinArray));
 	TaskXYZ<FwdK6A> task(fk6a);
@@ -191,43 +313,52 @@ DLLIMPORT int getTask11A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, d
 }
 
 // wrap inverse kinematic solvers
-DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz) {
+DLLIMPORT int getQps_IKnlopt_xyz5A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin) {
+	int ret = -1;
+
+	FwdK5A fk5a(kinArray2Struct5A(kinArray));
+	InvK_nlopt<TaskXYZ<FwdK5A>, FwdK5A> ik(fk5a, jntArray2Struct(jntArray), nlArray2Struct(nlArray));
+	ret = ik.solve(qps, xyz, fmin);
+
+	return ret;
+}
+DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin) {
 	int ret = -1;
 	
 	FwdK6A fk6a(kinArray2Struct6A(kinArray));
 	InvK_nlopt<TaskXYZ<FwdK6A>, FwdK6A> ik(fk6a, jntArray2Struct(jntArray), nlArray2Struct(nlArray));
-	ret = ik.solve(qps, xyz);
+	ret = ik.solve(qps, xyz, fmin);
 	
 	return ret;
 }
-DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz) {
+DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin) {
 	int ret = -1;
 
 	FwdK11A fk11a(kinArray2Struct11A(kinArray));
 	InvK_nlopt<TaskXYZ<FwdK11A>, FwdK11A> ik(fk11a, jntArray2Struct(jntArray), nlArray2Struct(nlArray));
-	ret = ik.solve(qps, xyz);
+	ret = ik.solve(qps, xyz, fmin);
 
 	return ret;
 }
-DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz) {
+DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin) {
 	int ret = -1;
 
 	FwdK6A fk6a(kinArray2Struct6A(kinArray));
 	InvK_nlopt<TaskXYZUxUyUz<FwdK6A>, FwdK6A> ik(fk6a, jntArray2Struct(jntArray), nlArray2Struct(nlArray));
 	double x[6] = { xyz[0],xyz[1],xyz[2], uxyz[0],uxyz[1],uxyz[2] };
-	ret = ik.solve(qps, x);
+	ret = ik.solve(qps, x, fmin);
 	xyz[0] = x[0]; xyz[1] = x[1]; xyz[2] = x[2];
 	uxyz[0] = x[3]; uxyz[4] = x[1]; uxyz[5] = x[2];
 
 	return ret;
 }
-DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz) {
+DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin) {
 	int ret = -1;
 
 	FwdK11A fk11a(kinArray2Struct11A(kinArray));
 	InvK_nlopt<TaskXYZUxUyUz<FwdK11A>, FwdK11A> ik(fk11a, jntArray2Struct(jntArray), nlArray2Struct(nlArray));
 	double x[6] = { xyz[0],xyz[1],xyz[2], uxyz[0],uxyz[1],uxyz[2] };
-	ret = ik.solve(qps, x);
+	ret = ik.solve(qps, x, fmin);
 	xyz[0] = x[0]; xyz[1] = x[1]; xyz[2] = x[2];
 	uxyz[0] = x[3]; uxyz[4] = x[1]; uxyz[5] = x[2];
 
@@ -235,6 +366,24 @@ DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double 
 }
 
 // wrap inverse parameter solvers
+DLLIMPORT int funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin) {
+	IPnlopt_kn0_xyz5A ip;
+	ip.funIP_kn0_xyz5A(nSamps, stackedQ, stackedX, kn0, fmin);
+	return 0;
+}
+	int ret = -99;
+
+	KINEMATICPARAMS5A kn5up = kinArray2Struct5A(k5up);
+	KINEMATICPARAMS5A kn5dn = kinArray2Struct5A(k5dn);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	IPnlopt_kn0_xyz5A ip(kn5up, kn5dn, nlParams);
+
+	ret = ip.estimate(nSamps, stackedQ, stackedX, kn0, fmin);
+
+	return ret;
+}
+
 DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin) {
 	InvPNLOpt_xyzdotu11A ip;
 	ip.funIP_UX11A(nSamps, stackedQ, stackedU, stackedX, qps0, pms0, fmin);
@@ -298,9 +447,18 @@ DLLIMPORT int estimatePmsQ_IPNLOpt_xyzpp11A(int nSamps, double *stackedQ, double
 }
 
 
+KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray) {
+	KINEMATICPARAMS5A params;
+	params.tx01 = kinArray[0];
+	params.ty01 = kinArray[1];
+	params.tz01 = kinArray[2];
+	params.rz01 = kinArray[3];
+	params.lCath = kinArray[4];
+	return params;
+}
 KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray) {
 	KINEMATICPARAMS6A params;
-	params.cathL = kinArray[0];
+	params.lCath = kinArray[0];
 	params.rz01 = kinArray[1];
 	params.tx01 = kinArray[2];
 	params.ty01 = kinArray[3];
@@ -319,21 +477,11 @@ KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray) {
 	params.tx23 = kinArray[5];
 	params.ry34 = kinArray[6];
 	params.rz34 = kinArray[7];
-	params.cathL = kinArray[8];
+	params.lCath = kinArray[8];
 	params.ry45 = kinArray[9];
 	params.rz45 = kinArray[10];
 	return params;
 }
-
-//NEWTONPARAMS nrArray2Struct(double *nrArray) {
-//	NEWTONPARAMS params;
-//	params.epslon = nrArray[0];
-//	params.errTol = nrArray[1];
-//	params.maxIts = nrArray[2];
-//	params.fact01 = nrArray[3];
-//	params.fact02 = nrArray[4];
-//	return params;
-//}
 
 NLOPTPARAMS nlArray2Struct(double *nlArray) {
 	NLOPTPARAMS params;

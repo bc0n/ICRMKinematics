@@ -4,6 +4,25 @@
 #include "kinematics_structs.h"
 #include <vector>
 
+
+class FwdK5A {
+private:
+	PHYSICALDIMENSIONS physicalDims;
+public:
+	KINEMATICPARAMS5A kinParams;
+
+	FwdK5A(); //use default kinematic params
+
+	FwdK5A(KINEMATICPARAMS5A inParams); //specified
+
+	// forwardK methods
+	Eigen::Matrix4d qps2H01(double *qps);
+	Eigen::Matrix4d qps2H02(double *qps);
+	Eigen::Matrix4d qps2H03(double *qps);
+	Eigen::Matrix4d qps2H04(double *qps);
+	Eigen::Matrix4d qps2H05(double *qps);
+};
+
 class FwdK6A {
 public:
 	KINEMATICPARAMS6A kinParams;

@@ -1,6 +1,33 @@
 #pragma once
 #include "eigenIncludes.h"
 
+// see kinematicFrames.png
+typedef struct tagPHYSICALDIMENSIONS{
+	double lProx = 25.50; //[mm] distance from proximal's proximal face to pitch axis
+	double lPtch = 11.03;  //[mm] distance from pitch axis to roll's proximal face
+	double lRoll = 12.49;  //[mm] distance from roll's proximal face to roll distal edge
+	double rProx = 6.00;   //[mm] radius of proximal, pitch, and roll
+	double lCath = 95;     //[mm]
+	double rCath = 3.175;  //[mm]
+} PHYSICALDIMENSIONS;
+
+
+// a minimal set of kinematics: locate the base roll and catheter length
+typedef struct tagKINEMATICPARAMS5A {
+	//0 grf, x directed along proximal shaft, z perpendicular to the table, y to the right when looking negative z
+	//1 the distal face of the coaxial input
+	//2 the pitch axis, rotating about z2
+	//3 the proximal face of the roll, rotating about x2=x3
+	//4 the catheter tip, remote center about 
+	//5 translate along x4 the projected distance
+	double tx01 = 806;
+	double ty01 = -66;
+	double tz01 = -28;
+	double rz01 = -.24;
+	double lCath = 95; //[mm] straight length
+} KINEMATICPARAMS5A;
+
+
 typedef struct tagKINEMATICPARAMS6A {
 	//0 grf, x directed along proximal shaft, z perpendicular to the table, y to the right when looking negative z
 	//1 base roll axis at pitch joint
@@ -13,7 +40,7 @@ typedef struct tagKINEMATICPARAMS6A {
 	double tz01 = 14.7;
 	double rz01 = -0.26;
 	double tx23 = 8.2;
-	double cathL = 98.75; //[mm] straight length
+	double lCath = 98.75; //[mm] straight length
 } KINEMATICPARAMS6A;
 
 typedef struct tagKINEMATICPARAMS11A {
@@ -26,7 +53,7 @@ typedef struct tagKINEMATICPARAMS11A {
 	double tx23 = 8.2;
 	double ry34 = 0;
 	double rz34 = 0;
-	double cathL = 98.75; //[mm] straight length
+	double lCath = 98.75; //[mm] straight length
 	double ry45 = 0;
 	double rz45 = 0;
 } KINEMATICPARAMS11A;
@@ -39,7 +66,7 @@ typedef struct tagJOINTLIMITS {
 	double dn[5] = { -3,-.8,-1,.0001,0 };
 } JOINTLIMITS;
 
-enum nlMethod {
+enum nlMethod {//redo
 	GN_DIRECT = 0,
 	GN_DIRECT_L = 1,
 	GN_DIRECT_L_NOSCAL = 2,
@@ -58,7 +85,22 @@ enum nlMethod {
 	LN_NEWUOA = 15,
 	LN_NEWUOA_BOUND = 16,
 	LN_PRAXIS = 17,
-	LN_SBPLX = 18
+	LN_SBPLX = 18,
+	GD_MLSL = 19,
+	GD_MLSL_LDS = 20,
+	GD_STOGO = 21,
+	GD_STOGO_RAND = 22,
+	LD_CCSAQ = 23,
+	LD_LBFGS = 24, 
+	LD_LBFGS_NOCEDAL = 25,
+	LD_MMA = 26,
+	LD_TNEWTON = 27, 
+	LD_TNEWTON_RESTART = 28,
+	LD_TNEWTON_PRECOND = 29,
+	LD_TNEWTON_PRECOND_RESTART = 30,
+	LD_VAR1 = 31,
+	LD_VAR2 = 32,
+	LD_SLSQP = 33
 };
 
 typedef struct tagNLOPTPARAMS {

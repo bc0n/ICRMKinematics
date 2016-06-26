@@ -25,7 +25,7 @@ classdef inter2D_kn11A < inter2D
             obj.pms.tx23 = 8.2;
             obj.pms.ry34 = 0; %rotation at the catheter base
             obj.pms.rz34 = 0;
-            obj.pms.cathL = 98;%95+3.75; %sldrw
+            obj.pms.lCath = 98;%95+3.75; %sldrw
             obj.pms.ry45 = 0; %rotation at the catheter tip
             obj.pms.rz45 = 0;
             
@@ -51,7 +51,7 @@ classdef inter2D_kn11A < inter2D
             H01 = obj.Tx(pms.tx01)*obj.Ty(pms.ty01)*obj.Tz(pms.tz01)*obj.Rz(pms.rz01)*obj.Ry(pms.ry01) * obj.Rx(qp(1)); %prox roll
             H12 = obj.Rz(qp(2)); %pitch
             H23 = obj.Tx(pms.tx23) * obj.Rx(qp(3)); %roll
-            r = pms.cathL/qp(4); %radius of catheter arc
+            r = pms.lCath/qp(4); %radius of catheter arc
             H34 = obj.Ry(pms.ry34)*obj.Rz(pms.rz34) * obj.Ty(r*(1-cos(qp(4)))) * obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4));
             H45 = obj.Ry(pms.ry45)*obj.Rz(pms.rz45) * obj.Tx( qp(5) ); %translation along x4 to the target
             
@@ -77,7 +77,7 @@ classdef inter2D_kn11A < inter2D
                 pms.tx23 = pma(6);
                 pms.ry34 = pma(7);
                 pms.rz34 = pma(8);
-                pms.cathL = pma(9);
+                pms.lCath = pma(9);
                 pms.ry45 = pma(10);
                 pms.rz45 = pma(11);
             else
@@ -94,7 +94,7 @@ classdef inter2D_kn11A < inter2D
                 pma(6,1) = pms.tx23;
                 pma(7,1) = pms.ry34;
                 pma(8,1) = pms.rz34;
-                pma(9,1) = pms.cathL;
+                pma(9,1) = pms.lCath;
                 pma(10,1) = pms.ry45;
                 pma(11,1) = pms.rz45;
             else

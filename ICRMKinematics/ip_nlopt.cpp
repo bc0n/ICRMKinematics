@@ -23,7 +23,7 @@ double funIPUX11A(const std::vector<double> &x, std::vector<double> &grad, void 
 	kp.tx23 = x[10];
 	kp.ry34 = x[11];
 	kp.rz34 = x[12];
-	kp.cathL = x[13];
+	kp.lCath = x[13];
 	kp.ry45 = x[14];
 	kp.rz45 = x[15];
 
@@ -108,7 +108,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	limup[10] = k11up.tx23;
 	limup[11] = k11up.ry34;
 	limup[12] = k11up.rz34;
-	limup[13] = k11up.cathL;
+	limup[13] = k11up.lCath;
 	limup[14] = k11up.ry45;
 	limup[15] = k11up.rz45;
 	limdn[5] = k11dn.tx01;
@@ -119,7 +119,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	limdn[10] = k11dn.tx23;
 	limdn[11] = k11dn.ry34;
 	limdn[12] = k11dn.rz34;
-	limdn[13] = k11dn.cathL;
+	limdn[13] = k11dn.lCath;
 	limdn[14] = k11dn.ry45;
 	limdn[15] = k11dn.rz45;
 
@@ -174,7 +174,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	limup[10] = k11up.tx23;
 	limup[11] = k11up.ry34;
 	limup[12] = k11up.rz34;
-	limup[13] = k11up.cathL;
+	limup[13] = k11up.lCath;
 	limup[14] = k11up.ry45;
 	limup[15] = k11up.rz45;
 	limdn[5] = k11dn.tx01;
@@ -185,7 +185,7 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	limdn[10] = k11dn.tx23;
 	limdn[11] = k11dn.ry34;
 	limdn[12] = k11dn.rz34;
-	limdn[13] = k11dn.cathL;
+	limdn[13] = k11dn.lCath;
 	limdn[14] = k11dn.ry45;
 	limdn[15] = k11dn.rz45;
 	alg.set_upper_bounds(limup);
@@ -268,7 +268,6 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 }
 
 double funIPxyzpp11A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
-
 	FIPDATA *pfip;
 	pfip = (FIPDATA*)fipData;
 
@@ -288,7 +287,7 @@ double funIPxyzpp11A(const std::vector<double> &x, std::vector<double> &grad, vo
 	kp.tx23 = x[10];
 	kp.ry34 = x[11];
 	kp.rz34 = x[12];
-	kp.cathL = x[13];
+	kp.lCath = x[13];
 	kp.ry45 = x[14];
 	kp.rz45 = x[15];
 
@@ -395,7 +394,7 @@ int InvPNLOpt_xyzpp11A::estimate(int nSamps, double *stackedQ, double *stackedU,
 	limup[10] = k11up.tx23;
 	limup[11] = k11up.ry34;
 	limup[12] = k11up.rz34;
-	limup[13] = k11up.cathL;
+	limup[13] = k11up.lCath;
 	limup[14] = k11up.ry45;
 	limup[15] = k11up.rz45;
 	limdn[5] = k11dn.tx01;
@@ -406,7 +405,7 @@ int InvPNLOpt_xyzpp11A::estimate(int nSamps, double *stackedQ, double *stackedU,
 	limdn[10] = k11dn.tx23;
 	limdn[11] = k11dn.ry34;
 	limdn[12] = k11dn.rz34;
-	limdn[13] = k11dn.cathL;
+	limdn[13] = k11dn.lCath;
 	limdn[14] = k11dn.ry45;
 	limdn[15] = k11dn.rz45;
 	alg.set_upper_bounds(limup);
@@ -482,6 +481,141 @@ int InvPNLOpt_xyzpp11A::estimate(int nSamps, double *stackedQ, double *stackedU,
 	}
 	printf("Found err %f\nq0[%f,%f,%f,%f,%f]\nk0[", fmn, x0[0], x0[1], x0[2], x0[3], x0[4]);
 	for (int i = 0; i < 11; i++) { printf("%f,", x0[i + 5]); }; printf("]\n");
+
+	return ret;
+}
+
+double errIP_kn0_xyz5A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
+	FIPDATA *pfip;
+	pfip = (FIPDATA*)fipData;
+
+	double qps[5];
+	double accum = 0.0;
+
+	//        0    1    2    3    4     5    6    7      8     9   10
+	//x = [tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,lCath, ry45,rz45
+
+	//new kinematic params
+	KINEMATICPARAMS5A kp;
+	kp.tx01 = x[0];
+	kp.ty01 = x[1];
+	kp.tz01 = x[2];
+	kp.rz01 = x[3];
+	kp.lCath = x[4];
+	
+	// FK with the new params
+	FwdK5A fk(kp);
+
+	//calculate error over all samps
+	Eigen::Matrix4d Hnew;
+	Eigen::Vector3d xyz;
+	for (int isamp = 0; isamp < pfip->nSamps; isamp++) {
+		//update q
+		for (int j = 0; j < 5; j++) {
+			qps[j] = pfip->stackedQ[isamp * 5 + j];
+		}
+
+		//new position
+		Hnew = fk.qps2H05(qps);
+
+		//error
+		Eigen::VectorXd evec(5);
+		evec(0) = pfip->stackedX[isamp * 3 + 0] - Hnew(0, 3);
+		evec(1) = pfip->stackedX[isamp * 3 + 1] - Hnew(1, 3);
+		evec(2) = pfip->stackedX[isamp * 3 + 2] - Hnew(2, 3);
+		accum += evec.norm();
+
+		//for verifiying against matlab
+		//printf("%d: q[%+5.2f,%+5.2f,%+5.2f,%+5.2f,%+5.2f]", isamp, qps[0], qps[1], qps[2], qps[3], qps[4]);
+		//printf(" u[%5.2f,%5.2f,%5.2f] x[%5.2f,%5.2f,%5.2f]", uxyz(0),uxyz(1),uxyz(2), xyz(0),xyz(1),xyz(2));
+		//printf("\n");
+		//printf(" u[%5.2f,%5.2f,%5.2f] x[%5.2f,%5.2f,%5.2f] = %f\n", unew(0), unew(1), unew(2), Hnew(0, 3), Hnew(1, 3), Hnew(2, 3), accum);
+
+	}
+	return accum;
+}
+IPnlopt_kn0_xyz5A::IPnlopt_kn0_xyz5A() {
+	KINEMATICPARAMS5A k;
+	k5dn = k;
+	NLOPTPARAMS n;
+	nlParams = n;
+}
+IPnlopt_kn0_xyz5A::IPnlopt_kn0_xyz5A(KINEMATICPARAMS5A kup, KINEMATICPARAMS5A kdn, NLOPTPARAMS nl) {
+	k5up = kup;
+	k5dn = kdn;
+	nlParams = nl;
+}
+void IPnlopt_kn0_xyz5A::funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin) {
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+
+	std::vector<double> x(5);
+	for (int i = 0; i < 5; i++) { x[i] = kn0[i]; }
+
+	*fmin = errIP_kn0_xyz5A(x, x, &fip);
+}
+int IPnlopt_kn0_xyz5A::estimate(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin) {
+	int ret = -99;
+
+	// set stopping criteria
+	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
+	alg.set_ftol_abs(nlParams.tolFunAbs);
+	alg.set_xtol_abs(nlParams.tolXAbs);
+	alg.set_maxeval(nlParams.maxIts);
+	alg.set_maxtime(nlParams.maxTimeSec);
+
+	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
+		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
+
+		lAlg.set_min_objective(funIPUX11A, pfip);
+		lAlg.set_upper_bounds(limup);
+		lAlg.set_lower_bounds(limdn);
+		lAlg.set_stopval(nlParams.minFunVal);
+		lAlg.set_ftol_abs(nlParams.tolFunAbs);
+		lAlg.set_xtol_abs(nlParams.tolXAbs);
+		lAlg.set_maxeval(nlParams.maxIts);
+		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+
+		alg.set_local_optimizer(lAlg);
+	}
+
+	// solve
+	nlopt::result res;
+	double fmn = 1e9;
+	try {
+		res = alg.optimize(x, fmn);
+	}
+	catch (nlopt::roundoff_limited e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught RoundoffLimited: " << e.what() << std::endl;
+	}
+	catch (nlopt::forced_stop e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught ForcedStop: " << e.what() << std::endl;
+	}
+	catch (std::runtime_error e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+	}
+	catch (std::invalid_argument e) {
+		res = nlopt::FAILURE;
+		printf("Caught: %s for x=[ %4.4f %4.4f %4.4f %4.4f %4.4f %4.4f]\n", e.what(), x[0], x[1], x[2], x[3], x[4], x[5]);
+	}
+	catch (std::bad_alloc e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+	}
+
+	// unpack from solver
+	*fmin = fmn;
+	ret = res;
+	for (int i = 0; i < 5; i++) {
+		kn0[i] = x[i];
+	}
+	printf("Found err %f and kn0[%f,%f,%f,%f,%f]\n", fmn, kn0[0], kn0[1], kn0[2], kn0[3], kn0[4]);
 
 	return ret;
 }

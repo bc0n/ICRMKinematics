@@ -99,8 +99,6 @@ public:
 };
 
 
-
-
 //from http://eigen.tuxfamily.org/bz/show_bug.cgi?id=257#c14
 template<typename _Matrix_Type_>_Matrix_Type_ pseudoInverse(const _Matrix_Type_ &a, double epsilon = std::numeric_limits<double>::epsilon()) {
 	Eigen::JacobiSVD< _Matrix_Type_ > svd(a, Eigen::ComputeThinU | Eigen::ComputeThinV);

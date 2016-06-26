@@ -34,5 +34,5 @@ private:
 	NLOPTPARAMS nlParams;
 public:
 	InvK_nlopt(TFK fkArg, JOINTLIMITS jlArg, NLOPTPARAMS nlArg);
-	int solve(double *qps, double *xyz);
+	int solve(double *qps, double *xyz, double *fmin);
 };

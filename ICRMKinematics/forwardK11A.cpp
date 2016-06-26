@@ -55,7 +55,7 @@ Eigen::Matrix4d FwdK11A::qps2H04(double *qps) {
 		qps[3] = 1e-3;
 	}
 
-	double r = kinParams.cathL / qps[3]; //radius of catheter arc
+	double r = kinParams.lCath / qps[3]; //radius of catheter arc
 	double ty = r * (1 - cos(qps[3]));
 	double tx = r * sin(qps[3]);
 
