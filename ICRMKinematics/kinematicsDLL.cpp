@@ -371,6 +371,7 @@ DLLIMPORT int funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, do
 	ip.funIP_kn0_xyz5A(nSamps, stackedQ, stackedX, kn0, fmin);
 	return 0;
 }
+DLLIMPORT int estimate_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *nlArray, double *fmin) {
 	int ret = -99;
 
 	KINEMATICPARAMS5A kn5up = kinArray2Struct5A(k5up);

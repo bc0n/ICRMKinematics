@@ -536,6 +536,7 @@ double errIP_kn0_xyz5A(const std::vector<double> &x, std::vector<double> &grad, 
 }
 IPnlopt_kn0_xyz5A::IPnlopt_kn0_xyz5A() {
 	KINEMATICPARAMS5A k;
+	k5up = k;
 	k5dn = k;
 	NLOPTPARAMS n;
 	nlParams = n;
@@ -558,6 +559,51 @@ void IPnlopt_kn0_xyz5A::funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *st
 }
 int IPnlopt_kn0_xyz5A::estimate(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin) {
 	int ret = -99;
+
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), 5); //there are 5 kinematic params in knParams5A
+
+	// set objective
+	void *pfip;
+	pfip = &fip;
+	alg.set_min_objective(errIP_kn0_xyz5A, pfip);
+
+	// set initial step size (only used by nongradient methods)
+
+	//set boundary constraints
+	//      0  1  2  3  4
+	//x = [tx01,ty01,tz01,rz01,lCath
+	std::vector<double> limup(5);
+	std::vector<double> limdn(5);
+	limup[0] = k5up.tx01;
+	limup[1] = k5up.ty01;
+	limup[2] = k5up.tz01;
+	limup[3] = k5up.rz01;
+	limup[4] = k5up.lCath;
+	limdn[0] = k5dn.tx01;
+	limdn[1] = k5dn.ty01;
+	limdn[2] = k5dn.tz01;
+	limdn[3] = k5dn.rz01;
+	limdn[4] = k5dn.lCath;
+	alg.set_upper_bounds(limup);
+	alg.set_lower_bounds(limdn);
+
+	// set start x to be within bounds
+	std::vector<double> x(5);
+	for (int i = 0; i < 5; i++) {
+		x[i] = kn0[i];
+		if (x[i] <= limdn[i]) {
+			x[i] = limdn[i];
+		}
+		if (limup[i] <= x[i]) {
+			x[i] = limup[i];
+		}
+	}
+	printf("Starting Inverse Parameter Search from kn0[%f,%f,%f,%f,%f]\n", x[0], x[1], x[2], x[3], x[4]);
 
 	// set stopping criteria
 	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
