@@ -11,7 +11,6 @@ typedef struct tagPHYSICALDIMENSIONS{
 	double rCath = 3.175;  //[mm]
 } PHYSICALDIMENSIONS;
 
-
 // a minimal set of kinematics: locate the base roll and catheter length
 typedef struct tagKINEMATICPARAMS5A {
 	//0 grf, x directed along proximal shaft, z perpendicular to the table, y to the right when looking negative z
@@ -27,7 +26,6 @@ typedef struct tagKINEMATICPARAMS5A {
 	double lCath = 95; //[mm] straight length
 } KINEMATICPARAMS5A;
 
-
 typedef struct tagKINEMATICPARAMS6A {
 	//0 grf, x directed along proximal shaft, z perpendicular to the table, y to the right when looking negative z
 	//1 base roll axis at pitch joint
@@ -39,8 +37,8 @@ typedef struct tagKINEMATICPARAMS6A {
 	double ty01 = -112;
 	double tz01 = 14.7;
 	double rz01 = -0.26;
-	double tx23 = 8.2;
-	double lCath = 98.75; //[mm] straight length
+	double ry34 = 0.0;
+	double lCath = 95; //[mm] straight length
 } KINEMATICPARAMS6A;
 
 typedef struct tagKINEMATICPARAMS11A {
@@ -48,22 +46,19 @@ typedef struct tagKINEMATICPARAMS11A {
 	double tx01 = 766.6;
 	double ty01 = -112;
 	double tz01 = 14.7;
-	double rz01 = -0.26;
 	double ry01 = 0;
-	double tx23 = 8.2;
-	double ry34 = 0;
-	double rz34 = 0;
-	double lCath = 98.75; //[mm] straight length
+	double rz01 = -0.26;
+	double ry34 = 0; //rotation of the catheter actuation plane, mostly in case of drooping
+	double rz34 = 0; //redundant with alpha near 0
+	double kAlpha = 1; //alpha gain
+	double eAlpha = 1; //alpha exponent
+	double lCath = 95; //[mm] straight length
 	double ry45 = 0;
-	double rz45 = 0;
 } KINEMATICPARAMS11A;
 
-//struct kinematicParams{
-//};
-
 typedef struct tagJOINTLIMITS {
-	double up[5] = { 2,.8,1,5,400 };
-	double dn[5] = { -3,-.8,-1,.0001,0 };
+	double up[5] = {  3, .8, 1,    5,500 };
+	double dn[5] = { -3,-.8,-1,.0001,  0 };
 } JOINTLIMITS;
 
 enum nlMethod {//redo

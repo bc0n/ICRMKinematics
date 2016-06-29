@@ -17,7 +17,6 @@ classdef inter2D
         
         name;
         nums; %numbers of things
-        
     end
     
     methods

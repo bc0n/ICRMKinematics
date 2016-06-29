@@ -223,3 +223,6 @@ ICRMKinematics.VC.db
 ICRMKinematics.VC.db
 compareIKSolutionStability/testSquareQps.dat
 *.asv
+matlab/i2dll_thunk_pcwin64.dll
+matlab/i2dll_thunk_pcwin64.lib
+*.dll

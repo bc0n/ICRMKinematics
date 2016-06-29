@@ -7,10 +7,7 @@
 % 4 - 
 % 5 - Translation along the X4
 classdef inter2D_kn6A < inter2D
-%     properties (Access = public)
-%         pms;        
-%     end %public props
-    
+
     methods
         
         function obj = inter2D_kn6A()
@@ -21,8 +18,8 @@ classdef inter2D_kn6A < inter2D
             obj.pms.ty01 = -66;
             obj.pms.tz01 = -28;
             obj.pms.rz01 = -.24;
-            obj.pms.tx23 = 8.2;
-            obj.pms.cathL = 98;%95+3.75; %sldrw
+            obj.pms.ry34 = 0; %angle of the articulation plane, to account for drooping
+            obj.pms.cathL = obj.drw.lCath; %as fabricated
             
             obj.nums.pms = 6;
             obj.nums.qps = 5;
@@ -45,10 +42,10 @@ classdef inter2D_kn6A < inter2D
             
             %compute transforms
             H01 = obj.Tx(pms.tx01)*obj.Ty(pms.ty01)*obj.Tz(pms.tz01)*obj.Rz(pms.rz01) * obj.Rx(qp(1)); %#ok<*PROP> %prox roll
-            H12 = obj.Rz(qp(2)); %pitch
-            H23 = obj.Tx(pms.tx23) * obj.Rx(qp(3)); %roll
-            r = pms.cathL/qp(4); %radius of catheter arc
-            H34 = obj.Ty(r*(1-cos(qp(4)))) * obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4));
+            H12 = obj.Tx(obj.drw.lProx) * obj.Rz(qp(2)); %pitch
+            H23 = obj.Tx(obj.drw.lPtch) * obj.Rx(qp(3)); %roll
+            r = pms.lCath/qp(4); %radius of catheter arc
+            H34 = obj.Tx(obj.drw.lRoll)*obj.Ry(pms.ry34) * obj.Ty(r*(1-cos(qp(4))))*obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4)); %ry34 for out-of-articulation plane
             H45 = obj.Tx( qp(5) ); %translation along x4 to the target
             
             varargout = {H01*H12*H23*H34*H45}; %H05
@@ -65,7 +62,7 @@ classdef inter2D_kn6A < inter2D
                 pms.ty01 = pma(2);
                 pms.tz01 = pma(3);
                 pms.rz01 = pma(4);
-                pms.tx23 = pma(5);
+                pms.ry34 = pma(5);
                 pms.cathL = pma(6);
             else
                 error('Matlab:inter2D_kn6A','pma does not have 6 elements');
@@ -77,7 +74,7 @@ classdef inter2D_kn6A < inter2D
                 pma(2,1) = pms.ty01;
                 pma(3,1) = pms.tz01;
                 pma(4,1) = pms.rz01;
-                pma(5,1) = pms.tx23;
+                pma(5,1) = pms.ry34;
                 pma(6,1) = pms.cathL;
             else
                 error('Matlab:inter2D_kn6A','pms is not a struct');

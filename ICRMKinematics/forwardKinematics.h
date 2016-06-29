@@ -12,7 +12,6 @@ public:
 	KINEMATICPARAMS5A kinParams;
 
 	FwdK5A(); //use default kinematic params
-
 	FwdK5A(KINEMATICPARAMS5A inParams); //specified
 
 	// forwardK methods
@@ -24,12 +23,13 @@ public:
 };
 
 class FwdK6A {
+private:
+	PHYSICALDIMENSIONS physicalDims;
 public:
 	KINEMATICPARAMS6A kinParams;
 
 	FwdK6A(); //use default kinematic params
-
-	FwdK6A(KINEMATICPARAMS6A inParams); //specified
+	FwdK6A(KINEMATICPARAMS6A inParams);
 
 	// forwardK methods
 	Eigen::Matrix4d qps2H01(double *qps);
@@ -40,12 +40,13 @@ public:
 };
 
 class FwdK11A {
+private:
+	PHYSICALDIMENSIONS physicalDims;
 public:
 	KINEMATICPARAMS11A kinParams;
 
 	FwdK11A(); // default params
-
-	FwdK11A(KINEMATICPARAMS11A inParams); //specified
+	FwdK11A(KINEMATICPARAMS11A inParams);
 
 	// forwardK methods
 	Eigen::Matrix4d qps2H01(double *qps); //adds Ry01
