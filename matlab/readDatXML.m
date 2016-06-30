@@ -1,10 +1,10 @@
 function d = readDatXML( datname, xmlname )
 % setComputer;
-% datname = 'testSquareXYZ_i0_n2942_160622_182315.dat';
-% xmlname = 'testSquareXYZ_i0_n2942_160622_182315.xml';
+% dnames = rdir('testSquareXYZ_i*.dat');
+% datname = dnames(1).name;
+    d.name = datname;
 
     fid = fopen(datname,'r','l');
-    
     fseek(fid,0,'eof');
     fsize = ftell(fid);
     fseek(fid,0,'bof');
@@ -17,7 +17,7 @@ function d = readDatXML( datname, xmlname )
     %commanded square
     a = 3; b = a + d.na*16 - 1;
     d.Hsq = permute( reshape(data(a:b),4,4,d.na),[3,2,1]);
-    
+
     % converged data
     a = b+1; b = a + d.na;
     d.map = data(a:b);
@@ -25,13 +25,12 @@ function d = readDatXML( datname, xmlname )
     for i = 2:d.na+1;
         d.a2b{i} = d.a2b{i-1}(end) + (1:d.map(i));
     end
-    
     a = b+1; b = a + d.na*5 - 1;
     d.qcv = reshape( data(a:b), 5, d.na)';
     a = b+1; b = a + d.na*3 - 1;
-    d.xcm = reshape( data(a:b), 3, d.na)';
+    d.xcm = reshape( data(a:b), 3, d.na)'; %IK xyz goal
     a = b+1; b = a + d.na*3 - 1;
-    d.xcv = reshape( data(a:b), 3, d.na)';
+    d.xcv = reshape( data(a:b), 3, d.na)'; %IK xyz converged
     a = b+1; b = a + d.na - 1;
     d.nrm = data(a:b);
     a = b+1; b = a + d.na - 1;

@@ -14,38 +14,37 @@ classdef inter2D_kn6A < inter2D
             obj@inter2D();
             obj.name = 'kn6A';
             
-            obj.pms.tx01 = 806;
-            obj.pms.ty01 = -66;
-            obj.pms.tz01 = -28;
-            obj.pms.rz01 = -.24;
-            obj.pms.ry34 = 0; %angle of the articulation plane, to account for drooping
-            obj.pms.cathL = obj.drw.lCath; %as fabricated
+            obj.kns.tx01 = 806;
+            obj.kns.ty01 = -66;
+            obj.kns.tz01 = -28;
+            obj.kns.rz01 = -.24;
+            obj.kns.ry34 = 0; %angle of the articulation plane, to account for drooping
+            obj.kns.lCath = obj.drw.lCath; %as fabricated
             
-            obj.nums.pms = 6;
+            obj.nums.kns = 6;
             obj.nums.qps = 5;
         end
         
-         function varargout = forwardK(obj, qp, pm)
+         function varargout = forwardK(obj, qp, kn)
             if nargin < 3
-                pm = obj.pms;
+                kn = obj.kns;
             end
-            %if pms array, translate into struct
-            if isstruct(pm)
-                pms = pm;
+            %if kns array, translate into struct
+            if isstruct(kn)
+                kns = kn;
             else
-                pms = obj.paramArray2Struct(pm);
+                kns = obj.knArray2Struct(kn);
             end
-
             
             %check q bounds
             if qp(4) < 1e-3; qp(4) = 1e-3; end %the catheter actuation angle cannot be less than 1e-3 (~0)
             
             %compute transforms
-            H01 = obj.Tx(pms.tx01)*obj.Ty(pms.ty01)*obj.Tz(pms.tz01)*obj.Rz(pms.rz01) * obj.Rx(qp(1)); %#ok<*PROP> %prox roll
+            H01 = obj.Tx(kns.tx01)*obj.Ty(kns.ty01)*obj.Tz(kns.tz01)*obj.Rz(kns.rz01) * obj.Rx(qp(1)); %#ok<*PROP> %prox roll
             H12 = obj.Tx(obj.drw.lProx) * obj.Rz(qp(2)); %pitch
             H23 = obj.Tx(obj.drw.lPtch) * obj.Rx(qp(3)); %roll
-            r = pms.lCath/qp(4); %radius of catheter arc
-            H34 = obj.Tx(obj.drw.lRoll)*obj.Ry(pms.ry34) * obj.Ty(r*(1-cos(qp(4))))*obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4)); %ry34 for out-of-articulation plane
+            r = kns.lCath/qp(4); %radius of catheter arc
+            H34 = obj.Tx(obj.drw.lRoll)*obj.Ry(kns.ry34) * obj.Ty(r*(1-cos(qp(4))))*obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4)); %ry34 for out-of-articulation plane
             H45 = obj.Tx( qp(5) ); %translation along x4 to the target
             
             varargout = {H01*H12*H23*H34*H45}; %H05
@@ -56,28 +55,28 @@ classdef inter2D_kn6A < inter2D
     end % public methods
     
     methods (Static)
-        function pms = paramArray2Struct(pma)
-            if length(pma) == 6;
-                pms.tx01 = pma(1);
-                pms.ty01 = pma(2);
-                pms.tz01 = pma(3);
-                pms.rz01 = pma(4);
-                pms.ry34 = pma(5);
-                pms.cathL = pma(6);
+        function kns = knArray2Struct(kna)
+            if length(kna) == 6;
+                kns.tx01 = kna(1);
+                kns.ty01 = kna(2);
+                kns.tz01 = kna(3);
+                kns.rz01 = kna(4);
+                kns.ry34 = kna(5);
+                kns.lCath = kna(6);
             else
-                error('Matlab:inter2D_kn6A','pma does not have 6 elements');
+                error('Matlab:inter2D_kn6A','kna does not have 6 elements');
             end
-        end %paramArray2Struct
-        function pma = paramStruct2Array(pms)
-            if isstruct(pms)
-                pma(1,1) = pms.tx01;
-                pma(2,1) = pms.ty01;
-                pma(3,1) = pms.tz01;
-                pma(4,1) = pms.rz01;
-                pma(5,1) = pms.ry34;
-                pma(6,1) = pms.cathL;
+        end %knArray2Struct
+        function kna = knStruct2Array(kns)
+            if isstruct(kns)
+                kna(1,1) = kns.tx01;
+                kna(2,1) = kns.ty01;
+                kna(3,1) = kns.tz01;
+                kna(4,1) = kns.rz01;
+                kna(5,1) = kns.ry34;
+                kna(6,1) = kns.lCath;
             else
-                error('Matlab:inter2D_kn6A','pms is not a struct');
+                error('Matlab:inter2D_kn6A','kns is not a struct');
             end
         end %paramStruct2Array
         

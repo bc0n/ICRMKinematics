@@ -13,25 +13,25 @@ classdef inter2D_kn5A < inter2D
             obj@inter2D();
             obj.name = 'kn5A';
             
-            obj.pms.tx01 = 806;
-            obj.pms.ty01 = -66;
-            obj.pms.tz01 = -28;
-            obj.pms.rz01 = -.24;
-            obj.pms.lCath = obj.drw.lCath; %as fabricated
+            obj.kns.tx01 = 806;
+            obj.kns.ty01 = -66;
+            obj.kns.tz01 = -28;
+            obj.kns.rz01 = -.24;
+            obj.kns.lCath = obj.drw.lCath; %as fabricated
             
-            obj.nums.pms = 5;
+            obj.nums.kns = 5;
             obj.nums.qps = 5;
         end
         
-         function varargout = forwardK(obj, qp, pm)
+         function varargout = forwardK(obj, qp, kn)
             if nargin < 3
-                pm = obj.pms;
+                kn = obj.kns;
             end
-            %if pms array, translate into struct
+            %if kns array, translate into struct
             if isstruct(pm)
-                pms = pm;
+                kns = kn;
             else
-                pms = obj.paramArray2Struct(pm);
+                kns = obj.knArray2Struct(pm);
             end
 
             % add initial joint positions...
@@ -42,10 +42,10 @@ classdef inter2D_kn5A < inter2D
             if qp(4) < 1e-3; qp(4) = 1e-3; end %the catheter actuation angle cannot be less than 1e-3 (~0)
             
             %compute transforms
-            H01 = obj.Tx(pms.tx01)*obj.Ty(pms.ty01)*obj.Tz(pms.tz01)*obj.Rz(pms.rz01) * obj.Rx(qp(1)); %#ok<*PROP> %prox roll
+            H01 = obj.Tx(kns.tx01)*obj.Ty(kns.ty01)*obj.Tz(kns.tz01)*obj.Rz(kns.rz01) * obj.Rx(qp(1)); %#ok<*PROP> %prox roll
             H12 = obj.Tx(obj.drw.lProx) * obj.Rz(qp(2)); %pitch
             H23 = obj.Tx(obj.drw.lPtch) * obj.Rx(qp(3)); %roll
-            r = pms.lCath/qp(4); %radius of catheter arc
+            r = kns.lCath/qp(4); %radius of catheter arc
             H34 = obj.Tx(obj.drw.lRoll) * obj.Ty(r*(1-cos(qp(4))))*obj.Tx(r*sin(qp(4))) * obj.Rz(qp(4));
             H45 = obj.Tx( qp(5) ); %translation along x4 to the target
             
@@ -57,28 +57,28 @@ classdef inter2D_kn5A < inter2D
     end % public methods
     
     methods (Static)
-        function pms = paramArray2Struct(pma)
+        function kns = knArray2Struct(pma)
             if length(pma) == 5;
-                pms.tx01 = pma(1);
-                pms.ty01 = pma(2);
-                pms.tz01 = pma(3);
-                pms.rz01 = pma(4);
-                pms.lCath = pma(5);
+                kns.tx01 = pma(1);
+                kns.ty01 = pma(2);
+                kns.tz01 = pma(3);
+                kns.rz01 = pma(4);
+                kns.lCath = pma(5);
             else
                 error('Matlab:inter2D_kn5A','pma does not have 5 elements');
             end
-        end %paramArray2Struct
-        function pma = paramStruct2Array(pms)
-            if isstruct(pms)
-                pma(1,1) = pms.tx01;
-                pma(2,1) = pms.ty01;
-                pma(3,1) = pms.tz01;
-                pma(4,1) = pms.rz01;
-                pma(5,1) = pms.lCath;
+        end %knArray2Struct
+        function pma = knStruct2Array(kns)
+            if isstruct(kns)
+                pma(1,1) = kns.tx01;
+                pma(2,1) = kns.ty01;
+                pma(3,1) = kns.tz01;
+                pma(4,1) = kns.rz01;
+                pma(5,1) = kns.lCath;
             else
-                error('Matlab:inter2D_kn5A','pms is not a struct');
+                error('Matlab:inter2D_kn5A','kns is not a struct');
             end
-        end %paramStruct2Array
+        end %knStruct2Array
         
     end %statics
     

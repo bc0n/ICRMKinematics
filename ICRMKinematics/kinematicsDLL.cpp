@@ -1,5 +1,18 @@
 #include "kinematicsDLL.h"
+#include "kinematics_structs.h"
+#include "forwardKinematics.h"
+#include "taskDefinitions.h"
+#include "ik_nlopt.h"
+#include "ip_nlopt.h"
 #include <iostream>
+
+
+//if in the header these confuse matlab's dll import
+KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray);
+KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
+KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
+NLOPTPARAMS nlArray2Struct(double *nlArray);
+JOINTLIMITS jntArray2Struct(double *jntArray);
 
 
 // wrap forwardK
@@ -238,29 +251,97 @@ DLLIMPORT int get6AH05(double *qps, double *kinArray, double *arrayH05) {
 	return ret;
 }
 
-DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05) {
-	int ret = -1;
-
+DLLIMPORT int get11AH01(double *qps, double *kinArray, double *arrayH) {
 	FwdK11A fk(kinArray2Struct11A(kinArray));
-	Eigen::Matrix4d H05 = fk.qps2H05(qps);
+	Eigen::Matrix4d H = fk.qps2H01(qps);
 
-	arrayH05[0] = H05(0, 0);
-	arrayH05[1] = H05(1, 0);
-	arrayH05[2] = H05(2, 0);
-	arrayH05[3] = H05(0, 1);
-	arrayH05[4] = H05(1, 1);
-	arrayH05[5] = H05(2, 1);
-	arrayH05[6] = H05(0, 2);
-	arrayH05[7] = H05(1, 2);
-	arrayH05[8] = H05(2, 2);
-	arrayH05[9] = H05(0, 3);
-	arrayH05[10] = H05(1, 3);
-	arrayH05[11] = H05(2, 3);
-
-	ret = 0;
-
-	return ret;
+	arrayH[0] = H(0, 0);
+	arrayH[1] = H(1, 0);
+	arrayH[2] = H(2, 0);
+	arrayH[3] = H(0, 1);
+	arrayH[4] = H(1, 1);
+	arrayH[5] = H(2, 1);
+	arrayH[6] = H(0, 2);
+	arrayH[7] = H(1, 2);
+	arrayH[8] = H(2, 2);
+	arrayH[9] = H(0, 3);
+	arrayH[10] = H(1, 3);
+	arrayH[11] = H(2, 3);
+	return 0;
 }
+DLLIMPORT int get11AH02(double *qps, double *kinArray, double *arrayH) {
+	FwdK11A fk(kinArray2Struct11A(kinArray));
+	Eigen::Matrix4d H = fk.qps2H02(qps);
+
+	arrayH[0] = H(0, 0);
+	arrayH[1] = H(1, 0);
+	arrayH[2] = H(2, 0);
+	arrayH[3] = H(0, 1);
+	arrayH[4] = H(1, 1);
+	arrayH[5] = H(2, 1);
+	arrayH[6] = H(0, 2);
+	arrayH[7] = H(1, 2);
+	arrayH[8] = H(2, 2);
+	arrayH[9] = H(0, 3);
+	arrayH[10] = H(1, 3);
+	arrayH[11] = H(2, 3);
+	return 0;
+}
+DLLIMPORT int get11AH03(double *qps, double *kinArray, double *arrayH) {
+	FwdK11A fk(kinArray2Struct11A(kinArray));
+	Eigen::Matrix4d H = fk.qps2H03(qps);
+
+	arrayH[0] = H(0, 0);
+	arrayH[1] = H(1, 0);
+	arrayH[2] = H(2, 0);
+	arrayH[3] = H(0, 1);
+	arrayH[4] = H(1, 1);
+	arrayH[5] = H(2, 1);
+	arrayH[6] = H(0, 2);
+	arrayH[7] = H(1, 2);
+	arrayH[8] = H(2, 2);
+	arrayH[9] = H(0, 3);
+	arrayH[10] = H(1, 3);
+	arrayH[11] = H(2, 3);
+	return 0;
+}
+DLLIMPORT int get11AH04(double *qps, double *kinArray, double *arrayH) {
+	FwdK11A fk(kinArray2Struct11A(kinArray));
+	Eigen::Matrix4d H = fk.qps2H04(qps);
+
+	arrayH[0] = H(0, 0);
+	arrayH[1] = H(1, 0);
+	arrayH[2] = H(2, 0);
+	arrayH[3] = H(0, 1);
+	arrayH[4] = H(1, 1);
+	arrayH[5] = H(2, 1);
+	arrayH[6] = H(0, 2);
+	arrayH[7] = H(1, 2);
+	arrayH[8] = H(2, 2);
+	arrayH[9] = H(0, 3);
+	arrayH[10] = H(1, 3);
+	arrayH[11] = H(2, 3);
+	return 0;
+}
+DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH) {
+	FwdK11A fk(kinArray2Struct11A(kinArray));
+	Eigen::Matrix4d H = fk.qps2H05(qps);
+
+	arrayH[0] = H(0, 0);
+	arrayH[1] = H(1, 0);
+	arrayH[2] = H(2, 0);
+	arrayH[3] = H(0, 1);
+	arrayH[4] = H(1, 1);
+	arrayH[5] = H(2, 1);
+	arrayH[6] = H(0, 2);
+	arrayH[7] = H(1, 2);
+	arrayH[8] = H(2, 2);
+	arrayH[9] = H(0, 3);
+	arrayH[10] = H(1, 3);
+	arrayH[11] = H(2, 3);
+	return 0;
+}
+
 
 // wrap taskDefinitions
 DLLIMPORT int getTask5A_xyz(double *qps, double *kinArray, double *xyz) {
@@ -455,6 +536,15 @@ DLLIMPORT int estimate_qp0kn0_xyzpp11A(int nSamps, double *stackedQ, double *sta
 
 	InvPNLOpt_xyzpp11A ip(kp11up, kp11dn, qp0Lims, nlParams);
 	return ip.estimate(nSamps, stackedQ, stackedU, stackedX, k110, qp0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k50, double *k5up, double *k5dn, double *qp0, double *q0Lims, double *nlArray, double *fmin) {
+	KINEMATICPARAMS5A kp5up = kinArray2Struct5A(k5up);
+	KINEMATICPARAMS5A kp5dn = kinArray2Struct5A(k5dn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvPNLOpt_xyzuxuyuz5A ip(kp5up, kp5dn, qp0Lims, nlParams);
+	return ip.estimate(nSamps, stackedQ, stackedU, stackedX, k50, qp0, fmin);
 }
 DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin) {
 	int ret = -99;

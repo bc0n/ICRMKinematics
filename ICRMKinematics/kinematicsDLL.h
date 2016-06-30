@@ -3,11 +3,7 @@
 #ifndef CICRM
 #define CICRM
 
-#include "kinematics_structs.h"
-#include "forwardKinematics.h"
-#include "taskDefinitions.h"
-#include "ik_nlopt.h"
-#include "ip_nlopt.h"
+
 
 // building a DLL
 #define DLLIMPORT __declspec (dllexport)
@@ -17,7 +13,7 @@ extern "C" { // using a C++ compiler
 #endif
 
 	typedef struct kinematics kinematics; //make class opaque to the wrapper---why do we want this?
-	DLLIMPORT kinematics* createKinematics(void);
+	//DLLIMPORT kinematics* createKinematics(void); apparently not needed
 
 
 	DLLIMPORT int get5AH01(double *qps, double *kinArray, double *arrayH01);
@@ -31,6 +27,11 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int get6AH03(double *qps, double *kinArray, double *arrayH03);
 	DLLIMPORT int get6AH04(double *qps, double *kinArray, double *arrayH04);
 	DLLIMPORT int get6AH05(double *qps, double *kinArray, double *arrayH05);
+
+	DLLIMPORT int get11AH01(double *qps, double *kinArray, double *arrayH01);
+	DLLIMPORT int get11AH02(double *qps, double *kinArray, double *arrayH02);
+	DLLIMPORT int get11AH03(double *qps, double *kinArray, double *arrayH03);
+	DLLIMPORT int get11AH04(double *qps, double *kinArray, double *arrayH04);
 	DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05);
 
 	//taskDefinitions --- expanded to encompass each FwdK and Task template variant
@@ -78,21 +79,15 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int fun_qp0kn0_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 
 	//simultaneous inverse parameter and initial joint estimation
-	DLLIMPORT int estimate_qp0kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *qp0, double *qpupdn, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzdotu11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzpp11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *qp0, double *qpupdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzdotu11A(  int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzpp11A(    int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k50,  double *k5up,  double *k5dn,  double *qp0, double *q0Lims, double *nlArray, double *fmin);
 	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
 
 
 #ifdef __cplusplus
 }
 #endif
-
-KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray);
-KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
-KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
-
-NLOPTPARAMS nlArray2Struct(double *nlArray);
-JOINTLIMITS jntArray2Struct(double *jntArray);
 
 #endif //CICRM

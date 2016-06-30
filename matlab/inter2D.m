@@ -4,7 +4,7 @@ classdef inter2D
         drw;    %measurments of the 3D printed parts from the solid model        
     end
     properties(GetAccess = 'public', SetAccess = 'public')
-        pms;    %kinematic params
+        kns;    %kinematic params
         eps;    %Numeric Jacobian delta
         maxIts; %maximum Newton Raphson iterations
         errTol; %error tolerance
@@ -13,7 +13,7 @@ classdef inter2D
         qp0;    %initial joint positions
         jlims;  %joint limits
         
-        opts;
+        opts;   %optimization parameters
         
         name;
         nums; %numbers of things
@@ -85,8 +85,8 @@ classdef inter2D
         
         
 %---kinematic parameter error functions---
-        %errSum = errQp0Pm0_xyzuxuyuz( obj, qp0, pm0, meaHs, meaQs )
-        function errSum = errQp0Pm0_xyzuxuyuz( obj, qp0, pm0, meaQs, meaXs, meaUs )
+        %errSum = err_qp0kn0_xyzuxuyuz( obj, qp0, pm0, meaHs, meaQs )
+        function errSum = err_qp0kn0_xyzuxuyuz( obj, qp0, pm0, meaQs, meaXs, meaUs )
             qp0 = reshape(qp0, 1,5);
             n = size(meaQs,1);
             errSum = 0;
@@ -135,47 +135,63 @@ classdef inter2D
         end
         
 %---kinematic parameter search function---
-        %res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
-        function res = findQp0Pm0_xyzuxuyuz(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
+        % res[telapsed,ret,kn0,qp0,fmin] = obj.estimate_qp0kn0_xyzuxuyuz( qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
+        function res = estimate_qp0kn0_xyzuxuyuz( obj, qps, Hs, kn0,knup,kndn, qp0,qpup,qpdn )
             qp0 = reshape(qp0, obj.nums.qps, 1);
-            qpPM = reshape(qpPM, obj.nums.qps, 1);
-            pm0 = reshape(pm0, obj.nums.pms, 1);
-            pmPM = reshape(pmPM, obj.nums.pms, 1);
+            qpup = reshape(qpup, obj.nums.qps, 1);
+            qpdn = reshape(qpdn, obj.nums.qps, 1);
+            if isstruct(kn0);
+                kn0 = obj.knStruct2Array(kn0);
+            else
+                kn0 = reshape(kn0, obj.nums.kns, 1);
+            end
+            if isstruct(knup)
+                knup = obj.knStruct2Array(knup);
+            else
+                knup = reshape(knup, obj.nums.kns, 1);
+            end
+            if isstruct(kndn)
+                kndn = obj.knStruct2Array(kndn);
+            else
+                kndn = reshape(kndn, obj.nums.kns, 1);
+            end
             
-            x0 = [qp0;pm0];
-            xp = [qp0 + qpPM; pm0 + pmPM];
-            xn = [qp0 - qpPM; pm0 - pmPM];
+            n = numel(qps)/obj.nums.qps;
             
-            fun = @(x)obj.errQp0Pm0_xyzuxuyuz( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), qs, xs, us);
+            x0 = [qp0;kn0];
+            xp = [qpup; knup];
+            xn = [qpdn; kndn];
+            
+            fun = @(x)obj.err_qp0kn0_xyzuxuyuz( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.kns)), qps, Hs(:,1:3,4), Hs(:,1:3,1));
             
             tic
             [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
             res.telapsed = toc;
             
+            res.ret = out.flag;
+            res.kn0 = obj.knArray2Struct( out.x(obj.nums.qps+(1:obj.nums.kns)) );
             res.qp0 = out.x(1:obj.nums.qps);
-            res.pm0 = out.x(obj.nums.qps+(1:obj.nums.pms));
-            res.fval = out.f;
-            res.flag = out.flag;
+            res.fmin = out.f;
             res.msg = out.message;
         end
 
-        function res = findQp0Pm0_xyzdotu(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
-            x0 = [qp0;pm0];
-            xp = [qp0 + qpPM; pm0 + pmPM];
-            xn = [qp0 - qpPM; pm0 - pmPM];
-            
-            fun = @(x)obj.errQp0Pm0_xyzdotu( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), qs,xs,us);
-            
-            tic
-            [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
-            res.telapsed = toc;
-            
-            res.qp0 = out.x(1:obj.nums.qps);
-            res.pm0 = out.x(obj.nums.qps+(1:obj.nums.pms));
-            res.fval = out.f;
-            res.flag = out.flag;
-            res.msg = out.message;
-        end
+%         function res = findQp0Pm0_xyzdotu(obj, qs,xs,us, qp0,qpPM, pm0,pmPM)
+%             x0 = [qp0;pm0];
+%             xp = [qp0 + qpPM; pm0 + pmPM];
+%             xn = [qp0 - qpPM; pm0 - pmPM];
+%             
+%             fun = @(x)obj.errQp0Pm0_xyzdotu( x(1:obj.nums.qps), x(obj.nums.qps+(1:obj.nums.pms)), qs,xs,us);
+%             
+%             tic
+%             [out.x,out.f,out.flag, out.message] = fmincon( fun, x0, [],[],[],[], xn,xp, [], obj.opts );
+%             res.telapsed = toc;
+%             
+%             res.qp0 = out.x(1:obj.nums.qps);
+%             res.pm0 = out.x(obj.nums.qps+(1:obj.nums.pms));
+%             res.fval = out.f;
+%             res.flag = out.flag;
+%             res.msg = out.message;
+%         end
 
 %---inverse kinematic error functions
         function err = errQps_xyz( obj, qps, goalXYZ )

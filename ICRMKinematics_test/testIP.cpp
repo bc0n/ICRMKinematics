@@ -17,9 +17,9 @@ int ret, nrows;
 
 void init() {
 	//       tx01             ty01             tz01           ry01            rz01           ry34           rz34         kAlpha         eAlpha          lCath            ry45
-	k11u[0] = 826; k11u[1] = -46.0; k11u[2] =  -8.0; k11u[3] =  .2; k11u[4] =  -.4; k11u[5] =  .2; k11u[6] =  .2; k11u[7] = 1.2; k11u[8] = 1.2; k11u[9] = 110; k11u[10] =  .2;
+	k11u[0] = 826; k11u[1] = -46.0; k11u[2] =  -8.0; k11u[3] =  .2; k11u[4] = -.04; k11u[5] =  .2; k11u[6] =  .2; k11u[7] = 1.2; k11u[8] = 1.2; k11u[9] = 110; k11u[10] =  .2;
 	k110[0] = 806; k110[1] = -66.0; k110[2] = -28.0; k110[3] =   0; k110[4] = -.24; k110[5] =   0; k110[6] =   0; k110[7] =   1; k110[8] =   1; k110[9] =  95; k110[10] =   0;
-	k11d[0] = 786; k11d[1] = -86.0; k11d[2] = -28.0; k11d[3] = -.2; k11d[4] = -.44; k11d[5] = -.2; k11d[6] = -.2; k11d[7] =  .8; k11d[8] =  .8; k11d[9] =  90; k11d[10] = -.2;	
+	k11d[0] = 786; k11d[1] = -86.0; k11d[2] = -48.0; k11d[3] = -.2; k11d[4] = -.44; k11d[5] = -.2; k11d[6] = -.2; k11d[7] =  .8; k11d[8] =  .8; k11d[9] =  90; k11d[10] = -.2;	
 
 	//          tx01              ty01              tz01              ry01             lCath
 	k5u[0] = k11u[0]; k5u[1] = k11u[1]; k5u[2] = k11u[2]; k5u[3] = k11u[3]; k5u[4] = k11u[9];
@@ -58,7 +58,8 @@ void init() {
 	//nlArray[2] = 17; // LN_PRAXIS
 	//nlArray[2] = 18; // LN_SUBPLX
 }
-void load(char *fname) {
+
+void load38Row(char *fname) {
 	int ncols = 38; //it, q0,q1,q2,q3,q4, H1, H2
 
 	//open
@@ -115,6 +116,89 @@ void load(char *fname) {
 	printf("u[%+5.4f %+5.4f %+5.4f]  ", stackedU[i * 3 + 0], stackedU[i * 3 + 1], stackedU[i * 3 + 2]);
 	printf("x[%+5.4f %+5.4f %+5.4f]\n", stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2]);
 	}//*/
+}
+//analogue of readDatXml.m version b34190bdaf4ac4bc3d9bd6a6c7349f01b7593d61, not parsing the xml
+void loadColumnDat(char *fname) {
+	printf("\n\nOpening %s\n", fname);
+	std::fstream fs;
+	fs.open(fname, std::fstream::in | std::fstream::binary); //name, read/write mode|binary
+	if (!fs) { std::cerr << "warning, could not open " << fname << std::endl; return; };
+
+	//fileSize & initialize variables
+	fs.seekg(0, fs.end);
+	long fileSize = (long)fs.tellg();
+	fs.seekg(0, fs.beg);
+	printf("fileSize %d\n", fileSize);
+	buffer = new char[fileSize];
+	
+	//read
+	fs.read(buffer, fileSize);
+	printf("read %d chars\n\n", (int)fs.gcount());
+	fs.close();
+
+	//extract -- Hs in row-major
+	double *pd = reinterpret_cast<double*>(buffer); //buffer is a byte array, but we know it to be double data
+	int na = (int)pd[0]; //number of points in the square
+	int nb = (int)pd[1]; //number of points after IK and ramp fills
+	nrows = nb; //as typically used
+	//std::cout << na << " " << nb << std::endl;
+
+	//commanded
+	int ahsq = 2; //for (int i = Hsqa; i < Hsqa + 10; i++) { printf("%8.3f ", pd[i]); }
+	int bhsq = ahsq + na * 16 -1;//for (int i = Hsqb-10; i <= Hsqb; i++) { printf("%8.3f ", pd[i]); }
+
+	//converged
+	int amap = bhsq + 1;
+	int bmap = amap + na;
+	//for (int i = amap; i < amap + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bmap-10; i <= bmap; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+	int aqcv = bmap + 1;
+	int bqcv = aqcv + 5 * na - 1;
+	//for (int i = aqcv; i < aqcv + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bqcv-10; i <= bqcv; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+	int axcm = bqcv + 1;
+	int bxcm = axcm + 3 * na - 1;
+	//for (int i = axcm; i < axcm + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bxcm-10; i <= bxcm; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+	int axcv = bxcm + 1;
+	int bxcv = axcv + 3 * na - 1;
+	//for (int i = axcv; i < axcv + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bxcv-10; i <= bxcv; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+	int anrm = bxcv + 1;
+	int bnrm = anrm + na - 1;
+	//for (int i = anrm; i < anrm + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bnrm-10; i <= bnrm; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+	int aret = bnrm + 1;
+	int bret = aret + na - 1;
+	//for (int i = aret; i < aret + 10; i++) { printf("%8.3f ", pd[i]); } printf("\n");
+	//for (int i = bret-10; i <= bret; i++) { printf("%8.3f ", pd[i]); }printf("\n");
+
+	//measured
+	stackedQ = new double[nb * 5];
+	stackedU = new double[nb * 3];
+	stackedX = new double[nb * 3];
+	int aqms = bret + 1;
+	int bqms = aqms + 5 * nb -1;
+	for (int i = 0; i < 5*nb; i++) {
+		stackedQ[i] = pd[i+aqms];
+	}
+	//for (int i = 5*9; i < 5*13; i++) { printf("%8.3f ", stackedQ[i]); } printf("\n");
+	//for (int i = (5*nb)-100; i < 5*nb; i++) { printf("%8.3f\n", stackedQ[i]); } printf("\n");
+	int ahms = bqms + 1;
+	int bhms = ahms + 16 * nb - 1;
+	//Hms is saved row-major
+	//for (int i = ahms; i < ahms + 16; i++) { printf("%8.5f ", pd[i]); } printf("\n");
+	for (int ib = 0; ib < nb; ib++) {
+		for (int irow = 0; irow < 3; irow++) {
+			//printf("%d %d %8.5f\n", ib, irow, pd[ahms + ib * 16 + irow*4]);
+			stackedU[ib * 3 + irow] = pd[ahms + ib * 16 + irow * 4 + 0];
+			stackedX[ib * 3 + irow] = pd[ahms + ib * 16 + irow * 4 + 3];
+		}
+	}
+	//for (int i = 0; i < 10; i++) { printf("%8.5f ", stackedU[i]); } printf("\n");
+	//for (int i = 0; i < 10; i++) { printf("%8.5f ", stackedX[i]); } printf("\n");
+	//for (int i = 3*nb-10; i < 3*nb; i++) { printf("%8.5f ", stackedU[i]); } printf("\n"); //d.Hms(end-3:end,1:3,1)'
+	//for (int i = 3*nb-10; i < 3*nb; i++) { printf("%8.5f ", stackedX[i]); } printf("\n");
 }
 
 void check_qp0_xyz5a() {
@@ -199,16 +283,45 @@ void check_qp0kn0_xyz5A() {
 	printf("k5u[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5u[i]); } printf("]\n");
 	printf("k50[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5[i]); } printf("]\n");
 	printf("k5d[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5d[i]); } printf("]\n");
-	std::cout << "puts the initial cathter bend into the pitch, need xyzuxuyuz task\n";
 }
+void check_qp0kn0_xyzuxuyuz5A() {
+	double fmin = 22;
+	printf("\nqp0kn0_xyzuxuyuz5a\n");
+	for (int i = 0; i < 5; i++) { k5[i] = k50[i]; }
+	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
 
+	//printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	//printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	//printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	//printf("k5u[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5u[i]); } printf("]\n");
+	//printf("k50[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5[i]); } printf("]\n");
+	//printf("k5d[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5d[i]); } printf("]\n");
+
+	ret = estimate_qp0kn0_xyzuxuyuz5A(20, stackedQ, stackedX, stackedU, k5, k5u, k5d, qps0, qpupdn, nlArray, &fmin);
+
+	printf("ret %d  fmin %f\n", ret, fmin);
+	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	printf("k5u[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5u[i]); } printf("]\n");
+	printf("k50[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5[i]); } printf("]\n");
+	printf("k5d[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5d[i]); } printf("]\n");
+}
 
 void check_qp0kn0_xyzpp11A() {
 	double fmin = 22;
 	printf("\nqp0kn0_xyzpp11a\n");
-	for (int i = 0; i < 5; i++) { k11[i] = k110[i]; }
+	for (int i = 0; i < 11; i++) { k11[i] = k110[i]; }
 	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+	//printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	//printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	//printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	//printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
+	//printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
+	//printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+
 	ret = estimate_qp0kn0_xyzpp11A(nrows, stackedQ, stackedX, stackedU, k11, k11u, k11d, qps0, qpupdn, nlArray, &fmin);
+
 	printf("ret %d  fmin %f\n", ret, fmin);
 	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
 	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
@@ -221,9 +334,17 @@ void check_qp0kn0_xyzpp11A() {
 void check_qp0kn0_xyzuxuyuz11A() {
 	double fmin = 22;
 	printf("\nqp0kn0_xyzuxuyuz11a\n");
-	for (int i = 0; i < 5; i++) { k11[i] = k110[i]; }
+	for (int i = 0; i < 11; i++) { k11[i] = k110[i]; }
 	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+	//printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	//printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	//printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	//printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
+	//printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
+	//printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+
 	ret = estimate_qp0kn0_xyzuxuyuz11A(nrows, stackedQ, stackedX, stackedU, k11, k11u, k11d, qps0, qpupdn, nlArray, &fmin);
+
 	printf("ret %d  fmin %f\n", ret, fmin);
 	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
 	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
@@ -232,16 +353,19 @@ void check_qp0kn0_xyzuxuyuz11A() {
 	printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
 	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
 }
+
 void main() {
 	init();
-	load("testSquareQps.dat");
+	//load38Row("testSquareQps.dat");
+	loadColumnDat("testSquareXYZ_i0_n2942_160622_191046.dat");
 
-	//check_qp0_xyz5a();
-	//check_qp0_xyzuxuyuz5a();
-	//check_kn0_xyz5a();
-	//check_qp0kn0_xyz5a_flipflop();
+	check_qp0_xyz5a();
+	check_qp0_xyzuxuyuz5a();
+	check_kn0_xyz5a();
+	check_qp0kn0_xyz5a_flipflop();
 	check_qp0kn0_xyz5A();
 	check_qp0kn0_xyzpp11A();
+	check_qp0kn0_xyzuxuyuz5A();
 	check_qp0kn0_xyzuxuyuz11A();
 	
 	std::cout << "\n\nPress Enter";

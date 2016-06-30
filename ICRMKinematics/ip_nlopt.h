@@ -107,9 +107,24 @@ private:
 public:
 	InvPNLOpt_xyzpp11A();
 	InvPNLOpt_xyzpp11A(KINEMATICPARAMS11A k11up, KINEMATICPARAMS11A k11dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin); //any way to weight xyzpp norm? pp don't do much
+	void funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 };
+
+
+class InvPNLOpt_xyzuxuyuz5A {
+private:
+	KINEMATICPARAMS5A k5up;
+	KINEMATICPARAMS5A k5dn;
+	JOINTLIMITS q0Lims; // using jlim struct for q0 bounds
+	NLOPTPARAMS nlParams;
+public:
+	InvPNLOpt_xyzuxuyuz5A();
+	InvPNLOpt_xyzuxuyuz5A(KINEMATICPARAMS5A k5up, KINEMATICPARAMS5A k5dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
+	void funIP_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
+	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
+};
+
 class InvPNLOpt_xyzuxuyuz11A {
 private:
 	KINEMATICPARAMS11A k11up;

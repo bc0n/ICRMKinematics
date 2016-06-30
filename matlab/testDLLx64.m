@@ -2,16 +2,17 @@
 setComputer;
 
 %% Load Library
-% dpath = '..\x64\Release\ICRMKinematics.dll';
-% hpath = '..\ICRMKinematics\kinematicsDLL.h';
-dpath = 'D:\interleavedCatheter\ICRMKinematics\x64\Release\ICRMKinematics.dll';
-hpath = 'D:\interleavedCatheter\ICRMKinematics\ICRMKinematics\kinematicsDLL.h';
+icrmPath = 'D:\flat\interleavedCatheter\ICRMKinematics';
+dpath = 'x64\Release\ICRMKinematics.dll';
+hpath = 'ICRMKinematics\kinematicsDLL.h';
 
 %if : "the specified module could not be found" then it can't find libnlopt.dll; copy into release
 %[notfound,warnings] = loadlibrary(dpath, hpath, 'mfilename','i2dx64', 'alias', 'i2dll') to generate a prototype file...bfm
 if ~libisloaded('i2dll');
-    [notfound,warnings] = loadlibrary(dpath, hpath, 'alias', 'i2dll')
+    [notfound,warnings] = loadlibrary(fullfile(icrmPath,dpath), fullfile(icrmPath,hpath), 'alias', 'i2dll')
 end
+%get processed signatures with
+% libfunctions('i2dll','-full')
 
 %% Test FKs
 i06 = inter2D_kn6A;
@@ -19,7 +20,7 @@ i11 = inter2D_kn11A;
 
 qps = [1,-.2,.1,3,10]';
 
-kn6a = [i06.pms.cathL, i06.pms.rz01,i06.pms.tx01,i06.pms.ty01,i06.pms.tz01,i06.pms.tx23]';
+kn6a = i06.paramStruct2Array( i06.pms );
 kn11a = i11.paramStruct2Array( i11.pms );
 H06 = reshape(eye(4),16,1); H11 = H06;
 %int get6AH01(double *qps, double *kinArray, double *arrayH01)
@@ -78,8 +79,8 @@ qpsG = qps; xyzG = xyz6a; qps0 = zeros(5,1);
 % 	//          5 = max evals
 % 	//          6 = max time reached
 %int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz)
-[ret6, qps6a, ~, ~, ~, xyz6a] = calllib( 'i2dll', 'getQps_IKnlopt_xyz6A', qps0, kn6a, nlArray, jntArray, xyzG);
-[ret11, qps11a, ~, ~, ~, xyz11a] = calllib( 'i2dll', 'getQps_IKnlopt_xyz11A', qps0, kn11a, nlArray, jntArray, xyzG);
+[ret6, qps6a, ~, ~, ~, xyz6a,fmin6] = calllib( 'i2dll', 'getQps_IKnlopt_xyz6A', qps0, kn6a, nlArray, jntArray, xyzG, 1e3);
+[ret11, qps11a, ~, ~, ~, xyz11a,fmin11] = calllib( 'i2dll', 'getQps_IKnlopt_xyz11A', qps0, kn11a, nlArray, jntArray, xyzG, 1e3);
 disp('getQps_IKnlopt_xyz')
 disp([0,ret6,ret11; qpsG, qps6a, qps11a; xyzG, xyz6a, xyz11a]);
 
@@ -97,11 +98,8 @@ stackedX = reshape(HG(:,1:3,4)',n*3,1);
 kn11up = kn11a + .2 + abs(kn11a)*.1;
 kn11dn = kn11a - .2 - abs(kn11a)*.1;
 
-%int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX,
-% double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin)
-[ret, ~,~,~, ~,~, ~, ~, qpsE, knE, fmin] = calllib('i2dll', 'estimatePmsQ_IPNLOpt_xyzdotu11A', ...
-    n, stackedQ, stackedU, stackedX, kn11up, kn11dn, jntArray, nlArray, qps0, kn11a, 0 )
-
+%%[int32, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr]                     estimate_qp0kn0_xyzdotu11A(int32, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr)
+[ret,~,~,~,knEst,~,~,qpEst,~,~,fmin] = calllib('i2dll', 'estimate_qp0kn0_xyzdotu11A', n,   stackedQ, stackedX, stackedQ, kn11a, kn11up, kn11dn, qps0, jntArray, nlArray, 1e3)
 
 %% Unload
 unloadlibrary i2dll;
