@@ -2,6 +2,8 @@ function d = readDatXML( datname, xmlname )
 % setComputer;
 % dnames = rdir('testSquareXYZ_i*.dat');
 % datname = dnames(1).name;
+% xnames = rdir('testSquareXYZ_i*.xml');
+% xmlname = xnames(1).name;
     d.name = datname;
 
     fid = fopen(datname,'r','l');
@@ -43,78 +45,8 @@ function d = readDatXML( datname, xmlname )
     d.Hms = permute( reshape(data(a:b),4,4,d.nb),[3,2,1]);
     
     %xml
-    xml = xml2struct(xmlname );
-    %nlparams
-    d.nlParams.maxIts = str2double(xml.LVData.Cluster.Cluster{1}.DBL{1}.Val.Text);
-    d.nlParams.maxTime = str2double(xml.LVData.Cluster.Cluster{1}.DBL{2}.Val.Text);
-    d.nlParams.method = str2double( xml.LVData.Cluster.Cluster{1}.EW.Val.Text );
-    d.nlParams.errTol = str2double(xml.LVData.Cluster.Cluster{1}.DBL{3}.Val.Text);
-    d.nlParams.funTol = str2double(xml.LVData.Cluster.Cluster{1}.DBL{4}.Val.Text);
-    d.nlParams.stepTol = str2double(xml.LVData.Cluster.Cluster{1}.DBL{5}.Val.Text);
-    %kn0 used in square IK
-    d.kn0.tx01 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{1}.Val.Text);
-    d.kn0.ty01 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{2}.Val.Text);
-    d.kn0.tz01 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{3}.Val.Text);
-    d.kn0.ry01 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{4}.Val.Text);
-    d.kn0.rz01 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{5}.Val.Text);
-    d.kn0.tx23 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{6}.Val.Text);
-    d.kn0.ry34 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{7}.Val.Text);
-    d.kn0.rz34 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{8}.Val.Text);
-    d.kn0.lCath = str2double(xml.LVData.Cluster.Cluster{2}.DBL{9}.Val.Text);
-    d.kn0.ry45 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{10}.Val.Text);
-    d.kn0.rz45 = str2double(xml.LVData.Cluster.Cluster{2}.DBL{11}.Val.Text);
-    %knPM used for invP around kn0
-    d.knPM.tx01 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{1}.Val.Text);
-    d.knPM.ty01 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{2}.Val.Text);
-    d.knPM.tz01 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{3}.Val.Text);
-    d.knPM.ry01 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{4}.Val.Text);
-    d.knPM.rz01 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{5}.Val.Text);
-    d.knPM.tx23 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{6}.Val.Text);
-    d.knPM.ry34 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{7}.Val.Text);
-    d.knPM.rz34 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{8}.Val.Text);
-    d.knPM.lCath = str2double(xml.LVData.Cluster.Cluster{3}.DBL{9}.Val.Text);
-    d.knPM.ry45 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{10}.Val.Text);
-    d.knPM.rz45 = str2double(xml.LVData.Cluster.Cluster{3}.DBL{11}.Val.Text);
+    x = read_ni_xml_object( xmlread( xmlname ));
+    d = mergestruct(d,x);
     
-    for i =1:5; d.qps0(i,1) = str2double(xml.LVData.Cluster.Array{1}.DBL{i}.Val.Text); end;
-    for i =1:5; d.qps0dn(i,1) = str2double(xml.LVData.Cluster.Array{2}.DBL{i}.Val.Text); end;
-    for i =1:5; d.qps0up(i,1) = str2double(xml.LVData.Cluster.Array{3}.DBL{i}.Val.Text); end;
-    for i =1:5; d.vLim(i,1) = str2double(xml.LVData.Cluster.Array{4}.DBL{i}.Val.Text); end;
-    
-    d.jLim.qpUp = [str2double(xml.LVData.Cluster.Cluster{4}.Array{1}.DBL{1}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{1}.DBL{2}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{1}.DBL{3}.Val.Text); 
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{1}.DBL{4}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{1}.DBL{5}.Val.Text)];
-    d.jLim.qpDn = [str2double(xml.LVData.Cluster.Cluster{4}.Array{2}.DBL{1}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{2}.DBL{2}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{2}.DBL{3}.Val.Text); 
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{2}.DBL{4}.Val.Text);
-              str2double(xml.LVData.Cluster.Cluster{4}.Array{2}.DBL{5}.Val.Text)];
-    
-    %square
-    nm = xml.LVData.Cluster.Cluster{5}.Name.Text;
-    for i = 1:numel(xml.LVData.Cluster.Cluster{5}.DBL)
-        field = xml.LVData.Cluster.Cluster{5}.DBL{i}.Name.Text;
-        field = strrep(field, '[','');
-        field = strrep(field, ']','');
-        field = strrep(field, '/','per');
-        d.(nm).(field) = str2double(xml.LVData.Cluster.Cluster{5}.DBL{i}.Val.Text);
-    end
-    for i = 1:numel(xml.LVData.Cluster.Cluster{5}.Array.DBL)
-        d.(nm).qp0(i,1) = str2double(xml.LVData.Cluster.Cluster{5}.Array.DBL{i}.Val.Text);
-    end
-    
-    %invP result
-    for i = 1:5; d.invp.qps0(i,1) = str2double(xml.LVData.Cluster.Cluster{6}.Array.DBL{i}.Val.Text); end;
-    for i = 1:11;
-        field = xml.LVData.Cluster.Cluster{6}.Cluster.DBL{i}.Name.Text;
-        d.invp.kn0.(field) = str2double(xml.LVData.Cluster.Cluster{6}.Cluster.DBL{i}.Val.Text);
-    end
-    d.invp.ret = str2double(xml.LVData.Cluster.Cluster{6}.I32.Val.Text);
-    d.invp.fmin = str2double(xml.LVData.Cluster.Cluster{6}.DBL.Val.Text);
-    
-    d.tsms = str2double(xml.LVData.Cluster.DBL.Val.Text);
-    d.col = [0,0,0];
-    
+    d.col = rand(1,3); %random color
 end
