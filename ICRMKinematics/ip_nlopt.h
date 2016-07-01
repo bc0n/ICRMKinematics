@@ -44,7 +44,7 @@ public:
 	IPnlopt_qp0_xyz5A();
 	IPnlopt_qp0_xyz5A(KINEMATICPARAMS5A kn5a);
 	IPnlopt_qp0_xyz5A(KINEMATICPARAMS5A kn5a, NLOPTPARAMS nlParams);
-	void funIP_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *fmin);
+	void fun_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *qpup, double *qpdn, double *fmin);
 };
 class IPnlopt_qp0_xyzuxuyuz5A {
@@ -55,11 +55,11 @@ public:
 	IPnlopt_qp0_xyzuxuyuz5A();
 	IPnlopt_qp0_xyzuxuyuz5A(KINEMATICPARAMS5A kn5a);
 	IPnlopt_qp0_xyzuxuyuz5A(KINEMATICPARAMS5A kn5a, NLOPTPARAMS nlParams);
-	void funIP_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *fmin);
+	void fun_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *qpup, double *qpdn, double *fmin);
 };
 
-// inverse parameter
+// inverse kinematic parameter
 class IPnlopt_kn0_xyz5A {
 private:
 	KINEMATICPARAMS5A k5up;
@@ -68,8 +68,30 @@ private:
 public:
 	IPnlopt_kn0_xyz5A();
 	IPnlopt_kn0_xyz5A(KINEMATICPARAMS5A k5up, KINEMATICPARAMS5A k5dn, NLOPTPARAMS nlParams);
-	void funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	void fun_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *x0, double *fmin);
+};
+class IPnlopt_kn0_xyz11A {
+private:
+	KINEMATICPARAMS11A kup;
+	KINEMATICPARAMS11A kdn;
+	NLOPTPARAMS nlParams;
+public:
+	IPnlopt_kn0_xyz11A();
+	IPnlopt_kn0_xyz11A(KINEMATICPARAMS11A kup, KINEMATICPARAMS11A kdn, NLOPTPARAMS nlParams);
+	void fun_kn0_xyz11A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	int estimate(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+};
+class IPnlopt_kn0_xyzuxuyuz11A {
+private:
+	KINEMATICPARAMS11A kup;
+	KINEMATICPARAMS11A kdn;
+	NLOPTPARAMS nlParams;
+public:
+	IPnlopt_kn0_xyzuxuyuz11A();
+	IPnlopt_kn0_xyzuxuyuz11A(KINEMATICPARAMS11A knup, KINEMATICPARAMS11A kndn, NLOPTPARAMS nlParams);
+	void fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin);
+	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin);
 };
 
 // simultaneous qp0 kn0
@@ -82,7 +104,7 @@ private:
 public:
 	IPnlopt_qp0kn0_xyz5A();
 	IPnlopt_qp0kn0_xyz5A(KINEMATICPARAMS5A k5up, KINEMATICPARAMS5A k5dn, JOINTLIMITS qp0Limits, NLOPTPARAMS nlParams);
-	void funIP_qp0kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *qp0, double *fmin);
+	void fun_qp0kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *qp0, double *fmin);
 };
 
@@ -95,7 +117,7 @@ private:
 public:
 	InvPNLOpt_xyzdotu11A();
 	InvPNLOpt_xyzdotu11A(KINEMATICPARAMS11A k11up, KINEMATICPARAMS11A k11dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
+	void fun_xyzdotu11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 };
 class InvPNLOpt_xyzpp11A {
@@ -107,7 +129,7 @@ private:
 public:
 	InvPNLOpt_xyzpp11A();
 	InvPNLOpt_xyzpp11A(KINEMATICPARAMS11A k11up, KINEMATICPARAMS11A k11dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
+	void fun_xyzpp11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 };
 
@@ -121,7 +143,7 @@ private:
 public:
 	InvPNLOpt_xyzuxuyuz5A();
 	InvPNLOpt_xyzuxuyuz5A(KINEMATICPARAMS5A k5up, KINEMATICPARAMS5A k5dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
+	void fun_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 };
 
@@ -134,6 +156,6 @@ private:
 public:
 	InvPNLOpt_xyzuxuyuz11A();
 	InvPNLOpt_xyzuxuyuz11A(KINEMATICPARAMS11A k11up, KINEMATICPARAMS11A k11dn, JOINTLIMITS q0Lims, NLOPTPARAMS nlParams);
-	void funIP_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin); //any way to weight xyzpp norm? pp don't do much
+	void fun_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin); //any way to weight xyzpp norm? pp don't do much
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *qp0, double *fmin);
 };

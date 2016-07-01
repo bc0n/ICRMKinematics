@@ -1175,5 +1175,6 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 template class InvK_nlopt<TaskXYZ<FwdK5A>, FwdK5A>;
 template class InvK_nlopt<TaskXYZ<FwdK6A>, FwdK6A>;
 template class InvK_nlopt<TaskXYZ<FwdK11A>, FwdK11A>;
+template class InvK_nlopt<TaskXYZUxUyUz<FwdK5A>, FwdK5A>;
 template class InvK_nlopt<TaskXYZUxUyUz<FwdK6A>, FwdK6A>;
 template class InvK_nlopt<TaskXYZUxUyUz<FwdK11A>, FwdK11A>;

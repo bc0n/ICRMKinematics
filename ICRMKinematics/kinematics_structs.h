@@ -42,7 +42,7 @@ typedef struct tagKINEMATICPARAMS6A {
 } KINEMATICPARAMS6A;
 
 typedef struct tagKINEMATICPARAMS11A {
-	//frames as above, adding static rotations Ry01, Ry34, Rz34, Ry45, Rz45 to accomodate out-of-plane movementss
+	//frames as above, adding static rotations Ry01, Ry34, Rz34, Ry45, Rz45 to accomodate out-of-plane movements
 	double tx01 = 766.6;
 	double ty01 = -112;
 	double tz01 = 14.7;

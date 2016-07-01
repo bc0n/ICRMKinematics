@@ -1,21 +1,22 @@
 #include <iostream>
+#include <Eigen/Eigen>
 #include "kinematicsDLL.h"
 
 double qps0[5];    //joint angles at start of solver
 double qpsGoal[5]; //joint angles associated with the xyzGoal (one possible solution to achieving xyzGoal)
 double xyzGoal[3]; //the goal position
-double kn5A[5], kn6A[6], kn11A[11]; //kinematics params
+double kn05[5], kn06[6], kn11[11]; //kinematics params
 double nlArray[6]; //nonlinear optimization params
 double jArray[10]; //joint limits
 
 void check_fk5A() {
-	printf("kn5A = ["); for (int i = 0; i < 5; i++) { printf("%5.4f ", kn5A[i]); } printf("]\n");
+	printf("kn05 = ["); for (int i = 0; i < 5; i++) { printf("%5.4f ", kn05[i]); } printf("]\n");
 
 	qps0[0] = .5; qps0[1] = .3; qps0[2] = -.4; qps0[3] = 2; qps0[4] = 50;
 	printf("qps0 = ["); for (int i = 0; i < 5; i++) { printf("%5.4f ", qps0[i]); } printf("]\n");
 
 	double arrayH05[12];
-	int ret = get5AH05(qps0, kn5A, arrayH05); //arrayH05 is column-major
+	int ret = get5AH05(qps0, kn05, arrayH05); //arrayH05 is column-major
 
 	Eigen::Matrix4d H;
 	H.setIdentity();
@@ -35,33 +36,33 @@ void check_nl_xyz(){
 	qpsGoal[0] = .5; qpsGoal[1] = .5; qpsGoal[2] = -.3; qpsGoal[3] = 2; qpsGoal[4] = 30;
 	
 	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
-	ret = getTask5A_xyz(qpsGoal, kn5A, xyzGoal);
+	ret = getTask5A_xyz(qpsGoal, kn05, xyzGoal);
 	printf("NLOpt XYZ 5A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f]\n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
-	ret = getQps_IKnlopt_xyz5A(qps, kn5A, nlArray, jArray, xyz, &fmin);
+	ret = estimate_qps_xyz5A(qps, kn05, nlArray, jArray, xyz, &fmin);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], fmin, ret);
 	std::cout << std::endl;
 
 	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
-	ret = getTask6A_xyz(qpsGoal, kn6A, xyzGoal);
+	ret = getTask6A_xyz(qpsGoal, kn06, xyzGoal);
 	printf("NLOpt XYZ 6A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f]\n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
-	ret = getQps_IKnlopt_xyz6A(qps, kn6A, nlArray, jArray, xyz, &fmin);
+	ret = estimate_qps_xyz6A(qps, kn06, nlArray, jArray, xyz, &fmin);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], fmin, ret);
 	std::cout << std::endl;
 
 
 	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
-	ret = getTask11A_xyz(qpsGoal, kn11A, xyzGoal);
+	ret = getTask11A_xyz(qpsGoal, kn11, xyzGoal);
 	printf("NLOpt XYZ 11A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f]\n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
-	ret = getQps_IKnlopt_xyz11A(qps, kn11A, nlArray, jArray, xyz, &fmin);
+	ret = estimate_qps_xyz11A(qps, kn11, nlArray, jArray, xyz, &fmin);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], fmin, ret);
 	std::cout << std::endl;
 }
@@ -73,49 +74,48 @@ void check_nl_xyzuxuyuz() {
 	qpsGoal[0] = .5; qpsGoal[1] = .5; qpsGoal[2] = -.3; qpsGoal[3] = 2; qpsGoal[4] = 30;
 
 	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
-	ret = getTask6A_xyzuxuyuz(qpsGoal, kn6A, xyzGoal, uxyzGoal);
+	ret = getTask5A_xyzuxuyuz(qpsGoal, kn05, xyzGoal, uxyzGoal);
+	printf("NLOpt XYZUxUyUz 5A\n");
+	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
+	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] \n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2], uxyzGoal[0], uxyzGoal[1], uxyzGoal[2]);
+	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
+	uxyz[0] = uxyzGoal[0]; uxyz[1] = uxyzGoal[1]; uxyz[2] = uxyzGoal[2];
+	ret = estimate_qps_xyzuxuyuz5A(qps, kn06, nlArray, jArray, xyz, uxyz, &fmin);
+	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], uxyz[0], uxyz[1], uxyz[2], fmin, ret);
+	std::cout << std::endl;
+
+	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
+	ret = getTask6A_xyzuxuyuz(qpsGoal, kn06, xyzGoal, uxyzGoal);
 	printf("NLOpt XYZUxUyUz 6A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] \n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2], uxyzGoal[0], uxyzGoal[1], uxyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
 	uxyz[0] = uxyzGoal[0]; uxyz[1] = uxyzGoal[1]; uxyz[2] = uxyzGoal[2];
-	ret = getQps_IKnlopt_xyzuxuyuz6A(qps, kn6A, nlArray, jArray, xyz, uxyz, &fmin);
+	ret = estimate_qps_xyzuxuyuz6A(qps, kn06, nlArray, jArray, xyz, uxyz, &fmin);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], uxyz[0], uxyz[1], uxyz[2], fmin, ret);
 	std::cout << std::endl;
 
-
 	qps[0] = 0; qps[1] = 0; qps[2] = 0; qps[3] = 0; qps[4] = 0; fmin = 1e3;
-	ret = getTask11A_xyzuxuyuz(qpsGoal, kn11A, xyzGoal, uxyzGoal);
+	ret = getTask11A_xyzuxuyuz(qpsGoal, kn11, xyzGoal, uxyzGoal);
 	printf("NLOpt XYZUxUyUz 11A\n");
 	printf("Init: qps[%8.3f %8.3f %8.3f %8.3f %8.3f]\n", qps[0], qps[1], qps[2], qps[3], qps[4]);
 	printf("Goal: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] \n", qpsGoal[0], qpsGoal[1], qpsGoal[2], qpsGoal[3], qpsGoal[4], xyzGoal[0], xyzGoal[1], xyzGoal[2], uxyzGoal[0], uxyzGoal[1], uxyzGoal[2]);
 	xyz[0] = xyzGoal[0]; xyz[1] = xyzGoal[1]; xyz[2] = xyzGoal[2];
 	uxyz[0] = uxyzGoal[0]; uxyz[1] = uxyzGoal[1]; uxyz[2] = uxyzGoal[2];
-	ret = getQps_IKnlopt_xyzuxuyuz11A(qps, kn11A, nlArray, jArray, xyz, uxyz, &fmin);
+	ret = estimate_qps_xyzuxuyuz11A(qps, kn11, nlArray, jArray, xyz, uxyz, &fmin);
 	printf("Cnvg: qps[%8.3f %8.3f %8.3f %8.3f %8.3f] = xyz[%8.3f %8.3f %8.3f] uxyz[%8.3f %8.3f %8.3f] fmin=%8.3f ret=%d\n", qps[0], qps[1], qps[2], qps[3], qps[4], xyz[0], xyz[1], xyz[2], uxyz[0], uxyz[1], uxyz[2], fmin, ret);
 	std::cout << std::endl;
 }
 
 
 int main(){
-	kn11A[0] = 806; kn11A[1] = -66.0; kn11A[2] = -28.0; kn11A[3] = 0; kn11A[4] = -.24; //TxyzRyz01
-	kn11A[5] = 8.2; //Tx23
-	kn11A[6] = 0; kn11A[7] = 0; kn11A[8] = 98; //Ryz34lCath
-	kn11A[9] = 0; 
-	kn11A[10] = 0; //Ryz45
+	//       tx01             ty01             tz01         ry01            rz01         ry34         rz34       kAlpha      eAlpha          lCath            ry45
+	kn11[0] = 806; kn11[1] = -66.0; kn11[2] = -28.0; kn11[3] = 0; kn11[4] = -.24; kn11[5] = 0; kn11[6] = 0; kn11[7] = 1; kn11[8] = 1; kn11[9] = 95; kn11[10] = 0;
+	//           tx01               ty01               tz01               rz01               ry34              lCath
+	kn06[0] = kn11[0]; kn06[1] = kn11[1]; kn06[2] = kn11[2]; kn06[3] = kn11[4]; kn06[4] = kn11[5]; kn06[5] = kn11[9];
+	//           tx01               ty01               tz01               rz01              lCath
+	kn05[0] = kn11[0]; kn05[1] = kn11[1]; kn05[2] = kn11[2]; kn05[3] = kn11[4]; kn05[4] = kn11[9];
 
-	kn6A[0] = kn11A[8]; //[mm] lCath
-	kn6A[1] = kn11A[4]; //Rz01
-	kn6A[2] = kn11A[0]; //Tx01
-	kn6A[3] = kn11A[1]; //Ty01
-	kn6A[4] = kn11A[2]; //Tz01
-	kn6A[5] = kn11A[5]; //Tx23
-
-	kn5A[0] = 806; //Tx01
-	kn5A[1] = -66; //Ty01
-	kn5A[2] = -28; //Tz01
-	kn5A[3] = -.24; //Rz01
-	kn5A[4] = 95; //[mm] lCath
 
 	nlArray[0] = 1e9; // maxIts
 	nlArray[1] = 60; // max time sec
@@ -164,7 +164,7 @@ int main(){
 	
 	//check_fk5A();
 	check_nl_xyz();
-	//check_nl_xyzuxuyuz();
+	check_nl_xyzuxuyuz();
 	
 	
 	std::cout << "\n\nPress Enter";

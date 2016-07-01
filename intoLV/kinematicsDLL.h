@@ -3,11 +3,7 @@
 #ifndef CICRM
 #define CICRM
 
-#include "kinematics_structs.h"
-#include "forwardKinematics.h"
-#include "taskDefinitions.h"
-#include "ik_nlopt.h"
-#include "ip_nlopt.h"
+
 
 // building a DLL
 #define DLLIMPORT __declspec (dllexport)
@@ -17,7 +13,7 @@ extern "C" { // using a C++ compiler
 #endif
 
 	typedef struct kinematics kinematics; //make class opaque to the wrapper---why do we want this?
-	DLLIMPORT kinematics* createKinematics(void);
+	//DLLIMPORT kinematics* createKinematics(void); apparently not needed
 
 
 	DLLIMPORT int get5AH01(double *qps, double *kinArray, double *arrayH01);
@@ -31,6 +27,11 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int get6AH03(double *qps, double *kinArray, double *arrayH03);
 	DLLIMPORT int get6AH04(double *qps, double *kinArray, double *arrayH04);
 	DLLIMPORT int get6AH05(double *qps, double *kinArray, double *arrayH05);
+
+	DLLIMPORT int get11AH01(double *qps, double *kinArray, double *arrayH01);
+	DLLIMPORT int get11AH02(double *qps, double *kinArray, double *arrayH02);
+	DLLIMPORT int get11AH03(double *qps, double *kinArray, double *arrayH03);
+	DLLIMPORT int get11AH04(double *qps, double *kinArray, double *arrayH04);
 	DLLIMPORT int get11AH05(double *qps, double *kinArray, double *arrayH05);
 
 	//taskDefinitions --- expanded to encompass each FwdK and Task template variant
@@ -39,12 +40,21 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int getTask11A_xyz(double *qps, double *kinArray, double *xyz);
 	DLLIMPORT int getTask6A_phiPsi(double *qps, double *kinArray, double *pp);
 	DLLIMPORT int getTask11A_phiPsi(double *qps, double *kinArray, double *pp);
+	DLLIMPORT int getTask5A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
 	DLLIMPORT int getTask6A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
 	DLLIMPORT int getTask11A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
 	
+	//funs
+	DLLIMPORT int fun_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn5a, double *qp0, double *fmin);
+	DLLIMPORT int fun_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn5a, double *qp0, double *fmin);
+	DLLIMPORT int fun_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	DLLIMPORT int fun_kn0_xyz11A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
+	DLLIMPORT int fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin);
+	DLLIMPORT int fun_qp0kn0_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
+	DLLIMPORT int fun_qp0kn0_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
 
-	//inverse kinematic solvers --- expanded to encompass each FwdK and Task template variant
-	// search begins from qps|xyz, result returned there
+	// optimizers
+	// search begins from kns|qps|xyz, result returned there
 	// returns -1 = failure
 	//         -2 = invalid args
 	//         -3 = out of memory
@@ -56,36 +66,34 @@ extern "C" { // using a C++ compiler
 	//          4 = x tol reached
 	//          5 = max evals
 	//          6 = max time reached
-	DLLIMPORT int getQps_IKnlopt_xyz5A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
-	DLLIMPORT int getQps_IKnlopt_xyz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
-	DLLIMPORT int getQps_IKnlopt_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
-	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz6A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
-	DLLIMPORT int getQps_IKnlopt_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
+
+	//inverse kinematics
+	DLLIMPORT int estimate_qps_xyz5A( double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int estimate_qps_xyz6A( double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int estimate_qps_xyz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *fmin);
+	DLLIMPORT int estimate_qps_xyzuxuyuz5A( double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
+	DLLIMPORT int estimate_qps_xyzuxuyuz6A( double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
+	DLLIMPORT int estimate_qps_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
+
+	//initial joint angle estimation
+	DLLIMPORT int estimate_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
 
 	//inverse paramameter estimation
-	DLLIMPORT int funIP_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
-	DLLIMPORT int estimate_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_kn0_xyz11A(      int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
 
 	//simultaneous inverse parameter and initial joint estimation
-	DLLIMPORT int funIP_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
-	//assumes qps0 = 0 and kpms0 are centered between up&dn
-	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A_assumeX0(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *fmin);
-	//uses the given qps0 and kpms0
-	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin);
-	DLLIMPORT int funIP_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
-	DLLIMPORT int estimatePmsQ_IPNLOpt_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *k11up, double *k11dn, double *q0Lims, double *nlArray, double *qps0, double *kps0, double *fmin);
-
+	DLLIMPORT int estimate_qp0kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *qp0, double *qpupdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzdotu11A(  int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzpp11A(    int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k50,  double *k5up,  double *k5dn,  double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
 
 
 #ifdef __cplusplus
 }
 #endif
-
-KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray);
-KINEMATICPARAMS6A kinArray2Struct6A(double *kinArray);
-KINEMATICPARAMS11A kinArray2Struct11A(double *kinArray);
-
-NLOPTPARAMS nlArray2Struct(double *nlArray);
-JOINTLIMITS jntArray2Struct(double *jntArray);
 
 #endif //CICRM
