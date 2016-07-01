@@ -51,8 +51,8 @@ end
 i2d{1}.kns.lCath = 95;
 %estimate
 qpup = [ .5; .3; .3;   1; 10];
-% qp0  = [  0;  0;  0;.2501;  0];
-qp0  = [  0;  0;  0;.251;  0];%something odd in 11A; fmin = inf unless qp0(4) => .251; not seen in the cpp test or when running from actual measurements
+qp0  = [  0;  0;  0;.2501;  0];
+% qp0  = [  0;  0;  0;.251;  0];%something odd in 11A; fmin = inf unless qp0(4) => .251; not seen in the cpp test or when running from actual measurements
 qpdn = [-.5;-.3;-.3;1e-3;-10];
 knup = [ 826.000  -46.000   -8.000    0.200   -0.040    0.200    0.200    1.200    1.200  110.000    0.200 ]';
 kn0  = [ 806.000  -66.000  -28.000    0.000   -0.240    0.000    0.000    1.000    1.000   95.000    0.000 ]';

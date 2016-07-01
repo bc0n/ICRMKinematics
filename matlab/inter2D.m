@@ -294,7 +294,7 @@ classdef inter2D
             %34
             qps(4) = qps(4) + obj.qp0(4);
             if qps(4) < 1e-3; qps(4) = 1e-3; end;
-            r = obj.pms.lCath/qps(4); %radius of catheter arc
+            r = obj.kns.lCath/qps(4); %radius of catheter arc
             h3 = h03*obj.Tx(obj.drw.lRoll);
             cathPts = [ h3*col, h03*obj.Tz(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h03*obj.Tz(obj.drw.rCath)*col,...
                         h03*col,h03*obj.Ty(obj.drw.rCath)*col, h03*obj.Ty(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h3*col, ...

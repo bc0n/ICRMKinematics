@@ -28,10 +28,10 @@ classdef inter2D_kn5A < inter2D
                 kn = obj.kns;
             end
             %if kns array, translate into struct
-            if isstruct(pm)
+            if isstruct(kn)
                 kns = kn;
             else
-                kns = obj.knArray2Struct(pm);
+                kns = obj.knArray2Struct(kn);
             end
 
             % add initial joint positions...
@@ -57,24 +57,24 @@ classdef inter2D_kn5A < inter2D
     end % public methods
     
     methods (Static)
-        function kns = knArray2Struct(pma)
-            if length(pma) == 5;
-                kns.tx01 = pma(1);
-                kns.ty01 = pma(2);
-                kns.tz01 = pma(3);
-                kns.rz01 = pma(4);
-                kns.lCath = pma(5);
+        function kns = knArray2Struct(kna)
+            if length(kna) == 5;
+                kns.tx01 = kna(1);
+                kns.ty01 = kna(2);
+                kns.tz01 = kna(3);
+                kns.rz01 = kna(4);
+                kns.lCath = kna(5);
             else
-                error('Matlab:inter2D_kn5A','pma does not have 5 elements');
+                error('Matlab:inter2D_kn5A','kna does not have 5 elements');
             end
         end %knArray2Struct
-        function pma = knStruct2Array(kns)
+        function kna = knStruct2Array(kns)
             if isstruct(kns)
-                pma(1,1) = kns.tx01;
-                pma(2,1) = kns.ty01;
-                pma(3,1) = kns.tz01;
-                pma(4,1) = kns.rz01;
-                pma(5,1) = kns.lCath;
+                kna(1,1) = kns.tx01;
+                kna(2,1) = kns.ty01;
+                kna(3,1) = kns.tz01;
+                kna(4,1) = kns.rz01;
+                kna(5,1) = kns.lCath;
             else
                 error('Matlab:inter2D_kn5A','kns is not a struct');
             end
