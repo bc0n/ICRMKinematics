@@ -57,7 +57,7 @@ classdef inter2D
             task = obj.H2xyzpp( H );
         end
 
-        %these use downward calls to the inheriting FKs, reconsider or make  a useless i2d FK?
+        %these use downward calls to the inheriting FKs, reconsider or make a useless i2d FK?
         function fun = funTaskXYZ(obj)
             fun = @(x)(obj.taskXYZ( obj.forwardK( x ))); %forwardK() is only found in the inheritors..should rearrange this
         end
@@ -68,6 +68,12 @@ classdef inter2D
             fun = @(x)(obj.taskXYZPP( obj.forwardK( x ))); %forwardK() is only found in the inheritors..should rearrange this
         end
         
+        %fun = funKTaskXYZ(obj)
+        % fun = @(qp,kn)(obj.taskXYZ( obj.forwardK( qp, kn )))
+        function fun = funKTaskXYZ(obj)
+            fun = @(qp,kn)(obj.taskXYZ( obj.forwardK( qp, kn ))); %forwardK() is only found in the inheritors..should rearrange this
+        end
+        
         %Compute the numeric Jacobian for taskFun about operating point qp
         function J = numQJ(obj,qp,taskFun)
             J = [ taskFun([qp(1)+obj.eps, qp(2), qp(3), qp(4), qp(5)]) - taskFun([qp(1)-obj.eps, qp(2), qp(3), qp(4), qp(5)]), ...
@@ -76,6 +82,28 @@ classdef inter2D
                   taskFun([qp(1), qp(2), qp(3), qp(4)+obj.eps, qp(5)]) - taskFun([qp(1), qp(2), qp(3), qp(4)-obj.eps, qp(5)]), ...
                   taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)+obj.eps]) - taskFun([qp(1), qp(2), qp(3), qp(4), qp(5)-obj.eps]) ] /2/obj.eps;
         end %numJ
+        
+        %J = numKJ(obj,kn0,qp,taskFun)
+        % kn0 = kinematic parameters
+        % qp  = qp operating point
+        % taskFun(qp,kn) = task function
+        % kinematicParmaterJacobian will have dimensions [nTask x nKin] s.t. [t;a;s;k] = J * [k;i;n]
+        function J = numKJ(obj, qp, kn0, taskKFun)
+            if isstruct(kn0);
+                kn0 = obj.knStruct2Array(kn0);
+            end
+            nkn = length(kn0);
+            
+            tsk = taskKFun(qp,kn0);
+            J = zeros(length(tsk), nkn);
+            for i = 1:nkn;
+                kn = kn0;
+                kn(i) = kn0(i) + obj.eps;
+                J(:,i) = taskKFun(qp, kn)/2/obj.eps;
+                kn(i) = kn0(i) - obj.eps;
+                J(:,i) = J(:,i) - taskKFun(qp, kn)/2/obj.eps;
+            end
+        end
         
         %Compute the manipulability of the given Jacobian at the given qp
         function m = numManip(obj, qp, taskFun )

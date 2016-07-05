@@ -45,7 +45,7 @@ classdef inter2D_kn11A < inter2D
             end
             
             %don't divide by 0
-            al = (qp(4)*obj.kns.kAlpha)^obj.kns.eAlpha; %allow slope,exponent in the articulation angle
+            al = (qp(4)*kns.kAlpha)^kns.eAlpha; %allow slope,exponent in the articulation angle
             if al < 1e-3; al = 1e-3; end
             r = kns.lCath/al; %radius of catheter arc
             
