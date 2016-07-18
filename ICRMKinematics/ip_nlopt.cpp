@@ -320,6 +320,168 @@ int IPnlopt_qp0_xyzuxuyuz5A::estimate(int nSamps, double *stackedQ, double *stac
 	return res;
 }
 
+double err_qp0_xyzuxuyuz11A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
+	FIPDATA *pfip;
+	pfip = (FIPDATA*)fipData; // cast from void
+
+	double qps[5];
+	double accum = 0.0;
+
+	//calculate error over all samps
+	Eigen::Matrix4d Hnew;
+	Eigen::VectorXd evec(6);
+	FwdK11A *fk = (FwdK11A*)(pfip->fk);
+	for (int isamp = 0; isamp < pfip->nSamps; isamp++) {
+		//update q
+		for (int j = 0; j < 5; j++) {
+			qps[j] = pfip->stackedQ[isamp * 5 + j] + x[j]; //try out the candidate qp0
+		}
+		//new position
+		Hnew = fk->qps2H05(qps);
+
+		//error
+		evec(0) = pfip->stackedX[isamp * 3 + 0] - Hnew(0, 3);//x
+		evec(1) = pfip->stackedX[isamp * 3 + 1] - Hnew(1, 3);//y
+		evec(2) = pfip->stackedX[isamp * 3 + 2] - Hnew(2, 3);//z
+		evec(3) = pfip->stackedU[isamp * 3 + 0] - Hnew(0, 0);//ux
+		evec(4) = pfip->stackedU[isamp * 3 + 1] - Hnew(1, 0);//uy
+		evec(5) = pfip->stackedU[isamp * 3 + 2] - Hnew(2, 0);//uz
+		accum += evec.norm();
+	}
+	return accum;
+}
+IPnlopt_qp0_xyzuxuyuz11A::IPnlopt_qp0_xyzuxuyuz11A() {
+	KINEMATICPARAMS11A kn;
+	NLOPTPARAMS nlParams;
+}
+IPnlopt_qp0_xyzuxuyuz11A::IPnlopt_qp0_xyzuxuyuz11A(KINEMATICPARAMS11A kn11a) {
+	kn = kn11a;
+}
+IPnlopt_qp0_xyzuxuyuz11A::IPnlopt_qp0_xyzuxuyuz11A(KINEMATICPARAMS11A kn11a, NLOPTPARAMS nl) {
+	kn = kn11a;
+	nlParams = nl;
+}
+void IPnlopt_qp0_xyzuxuyuz11A::fun_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *fmin) {
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+	fip.stackedU = stackedU;
+
+	FwdK11A fk(kn);
+	fip.fk = (void*)(&fk);
+
+	std::vector<double> x(5), g(5);
+	for (int i = 0; i < 5; i++) { x[i] = qp0[i]; }
+
+	*fmin = err_qp0_xyzuxuyuz11A(x, g, &fip);
+}
+int IPnlopt_qp0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *qpup, double *qpdn, double *fmin) {
+	int ret = -99;
+
+	// set method
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), 5); //there are 5 joints
+
+	// set objective
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+	fip.stackedU = stackedU;
+	FwdK11A fk(kn);
+	fip.fk = (void*)&fk;
+	void *vfip = &fip;
+	alg.set_min_objective(err_qp0_xyzuxuyuz11A, vfip);
+
+	// set initial step size (only used by nongradient methods)
+	
+	//set boundary constraints
+	std::vector<double> limup(5), limdn(5);
+	for (int i = 0; i < 5; i++) {
+		limup[i] = qpup[i];
+		limdn[i] = qpdn[i];
+	}
+	alg.set_upper_bounds(limup);
+	alg.set_lower_bounds(limdn);
+
+	// set start x to be within bounds
+	std::vector<double> x(5);
+	for (int i = 0; i < 5; i++) {
+		x[i] = qp0[i];
+		if (x[i] <= limdn[i]) {
+			x[i] = limdn[i];
+		}
+		if (limup[i] <= x[i]) {
+			x[i] = limup[i];
+		}
+	}
+	//printf("Starting Initial Joint Angle Search from qp0[%f,%f,%f,%f,%f]\n", x[0], x[1], x[2], x[3], x[4]);
+
+	// set stopping criteria
+	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
+	alg.set_ftol_abs(nlParams.tolFunAbs);
+	alg.set_xtol_abs(nlParams.tolXAbs);
+	alg.set_maxeval(nlParams.maxIts);
+	alg.set_maxtime(nlParams.maxTimeSec);
+
+	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
+		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
+
+		lAlg.set_min_objective(err_qp0_xyzuxuyuz11A, vfip);
+		lAlg.set_upper_bounds(limup);
+		lAlg.set_lower_bounds(limdn);
+		lAlg.set_stopval(nlParams.minFunVal);
+		lAlg.set_ftol_abs(nlParams.tolFunAbs);
+		lAlg.set_xtol_abs(nlParams.tolXAbs);
+		lAlg.set_maxeval(nlParams.maxIts);
+		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+
+		alg.set_local_optimizer(lAlg);
+	}
+
+	// solve
+	nlopt::result res;
+	*fmin = 1e3;
+
+	try {
+		res = alg.optimize(x, *fmin);
+	}
+	catch (nlopt::roundoff_limited e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught RoundoffLimited: " << e.what() << std::endl;
+	}
+	catch (nlopt::forced_stop e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught ForcedStop: " << e.what() << std::endl;
+	}
+	catch (std::runtime_error e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+	}
+	catch (std::invalid_argument e) {
+		res = nlopt::FAILURE;
+		printf("Caught: %s for x=[ %4.4f %4.4f %4.4f %4.4f %4.4f]\n", e.what(), x[0], x[1], x[2], x[3], x[4]);
+	}
+	catch (std::bad_alloc e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+	}
+	catch (...) {
+		std::cout << "Caught ellipsis" << std::endl;
+	}
+	*fmin /= nSamps;
+	//unpack from solver
+	for (int i = 0; i < 5; i++) {
+		qp0[i] = x[i];
+	}
+	//printf("Found err %f and qp0[%f,%f,%f,%f,%f]\n", *fmin, qp0[0], qp0[1], qp0[2], qp0[3], qp0[4]);
+
+	return res;
+}
+
+
+
 // inverse parameter
 double err_kn0_xyz5A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
 	FIPDATA *pfip;

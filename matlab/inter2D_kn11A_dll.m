@@ -23,6 +23,30 @@ classdef inter2D_kn11A_dll < inter2D
             obj.nums.kns = 11;
             obj.nums.qps = 5;
             
+            % Algs
+            %          00;  GN_DIRECT
+            %          01;  GN_DIRECT_L --locally biased
+            %          03;  GN_DIRECT_L_RAND
+            %          04;  GN_ESCH
+            %          05;  GN_ISRES
+            %          06;  GN_MLSL -- slow due to local searches
+            %          07;  GN_MLSL_LDS
+            %          12;  LN_BOBYQA
+            %          13;  LN_COBYLA
+            %          14;  LN_NelderMead
+            %          17;  LN_PRAXIS
+            %          18;  LN_SUBPLX
+            %   returns -1 = failure
+            %           -2 = invalid args
+            %           -3 = out of memory
+            %           -4 = roundoff limited
+            %           -5 = forced stop
+            %            1 = success
+            %            2 = fun stopval reached
+            %            3 = fun tol reached
+            %            4 = x tol reached
+            %            5 = max evals
+            %            6 = max time reached
             obj.opts = obj.getDefaultNLOptParams; %replace fminunc options with NLOpt options
             
             %Load Library
@@ -45,6 +69,7 @@ classdef inter2D_kn11A_dll < inter2D
         end
         
         function varargout = forwardK(obj, qps, kn)
+            disp(nargout)
             if nargin < 3
                 kn = obj.kns;
             end
@@ -54,22 +79,64 @@ classdef inter2D_kn11A_dll < inter2D
             else
                 kns = kn;
             end
-            if nargout == 1; %only H05
-                [~,~,~,Hc] = calllib( obj.name, 'get11AH05', qps, kns, zeros(12,1));
-                varargout{1} = [reshape(Hc,3,4);0,0,0,1];
-            else %all
+
+            [~,~,~,H] = calllib( obj.name, 'get11AH05', qps, kns, zeros(12,1));
+            varargout = {[reshape(H,3,4);0,0,0,1]};
+            if nargout > 1;
                 [~,~,~,H] = calllib( obj.name, 'get11AH01', qps, kns, zeros(12,1) );
-                varargout{1} = [reshape(H,3,4);0,0,0,1];
+                H01 = [reshape(H,3,4);0,0,0,1];
                 [~,~,~,H] = calllib( obj.name, 'get11AH02', qps, kns, zeros(12,1) );
-                varargout{2} = [reshape(H,3,4);0,0,0,1];
+                H02 = [reshape(H,3,4);0,0,0,1];
                 [~,~,~,H] = calllib( obj.name, 'get11AH03', qps, kns, zeros(12,1) );
-                varargout{3} = [reshape(H,3,4);0,0,0,1];
+                H03 = [reshape(H,3,4);0,0,0,1];
                 [~,~,~,H] = calllib( obj.name, 'get11AH04', qps, kns, zeros(12,1) );
-                varargout{4} = [reshape(H,3,4);0,0,0,1];
+                H04 = [reshape(H,3,4);0,0,0,1];
                 [~,~,~,H] = calllib( obj.name, 'get11AH05', qps, kns, zeros(12,1) );
-                varargout{5} = [reshape(H,3,4);0,0,0,1];
+                H05 = [reshape(H,3,4);0,0,0,1];
+                varargout = [{H01}, {H02}, {H03}, {H04}, {H05}];
             end
         end %FK
+        
+        % res[ret,qp0,fmin] = obj.estimate_qp0_xyzuxuyuz( qps, Hs, kn0, qp0,qpup,qpdn )
+        function res = estimate_qp0_xyzuxuyuz(obj, qps, Hs, kn0, qp0,qpup,qpdn )
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps, n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            nlArray = obj.nlStruct2Array(obj.opts);
+            
+            tic
+            [ret,~,~,~,knEst,qpEst,~,~,~,fmin] = calllib(obj.name, 'estimate_qp0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, qp0,qpup,qpdn, nlArray, 1e3);
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(knEst);
+            res.qp0 = qpEst;
+            res.fmin = fmin;
+        end
+        
+        % res[ret,kn0,fmin] = obj.estimate_kn0_xyzuxuyuz( qps, Hs, kn0,knup,kndn )
+        function res = estimate_kn0_xyzuxuyuz(obj, qps, Hs, kn0,knup,kndn )
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps, n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            if isstruct(knup); knup = obj.knStruct2Array(knup); end;
+            if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
+            
+            nlArray = obj.nlStruct2Array(obj.opts);
+            
+            tic
+            [ret,~,~,~,knEst,a,b,c,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, nlArray, 1e3)
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(knEst);
+            res.fmin = fmin;
+        end
         
         % res[ret,kn0,qp0,fmin] = obj.estimate_qp0kn0_xyzuxuyuz( qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
         function res = estimate_qp0kn0_xyzuxuyuz(obj, qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
@@ -86,14 +153,15 @@ classdef inter2D_kn11A_dll < inter2D
             nlArray = obj.nlStruct2Array(obj.opts);
             
             tic
-            [ret,~,~,~,knEst,~,~,qpEst,~,~,fmin] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A', n,   stackedQ, stackedX, stackedQ, kn0, knup, kndn, qp0, [qpdn;qpup], nlArray, 1e3);
-%             [ret,~,~,~,knEst,~,~,qpEst,~,~,fmin] = calllib(obj.name, 'estimate_qp0kn0_xyzpp11A', n,   stackedQ, stackedX, stackedQ, kn0, knup, kndn, qp0, [qpdn;qpup], nlArray, 1e3);
+            [ret,~,~,~,knEst,~,~,qpEst,~,~,fmin] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A', n,   stackedQ, stackedX, stackedU, kn0, knup, kndn, qp0, [qpdn;qpup], nlArray, 1e3);
             res.telapsed = toc;
             res.ret = ret;
             res.kn0 = obj.knArray2Struct(knEst);
             res.qp0 = qpEst;
             res.fmin = fmin;
         end
+        
+        
     end %public methods
     
     methods (Static)

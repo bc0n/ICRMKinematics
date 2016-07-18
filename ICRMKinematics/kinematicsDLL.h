@@ -78,6 +78,7 @@ extern "C" { // using a C++ compiler
 	//initial joint angle estimation
 	DLLIMPORT int estimate_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
 	DLLIMPORT int estimate_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
 
 	//inverse paramameter estimation
 	DLLIMPORT int estimate_kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);

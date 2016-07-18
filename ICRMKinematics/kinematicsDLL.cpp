@@ -516,7 +516,14 @@ DLLIMPORT int estimate_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *sta
 
 	return ret;
 }
+DLLIMPORT int estimate_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin) {
+	int ret = -99;
 
+	IPnlopt_qp0_xyzuxuyuz11A ip(kinArray2Struct11A(kn), nlArray2Struct(nlArray));
+	ret = ip.estimate(nSamps, stackedQ, stackedX, stackedU, qp0, qpup, qpdn, fmin);
+
+	return ret;
+}
 
 // wrap inverse parameter solvers
 DLLIMPORT int estimate_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin) {

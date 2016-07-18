@@ -58,6 +58,17 @@ public:
 	void fun_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *fmin);
 	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *qpup, double *qpdn, double *fmin);
 };
+class IPnlopt_qp0_xyzuxuyuz11A {
+private:
+	KINEMATICPARAMS11A kn;
+	NLOPTPARAMS nlParams;
+public:
+	IPnlopt_qp0_xyzuxuyuz11A();
+	IPnlopt_qp0_xyzuxuyuz11A(KINEMATICPARAMS11A kn11a);
+	IPnlopt_qp0_xyzuxuyuz11A(KINEMATICPARAMS11A kn11a, NLOPTPARAMS nlParams);
+	void fun_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *fmin);
+	int estimate(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *qpup, double *qpdn, double *fmin);
+};
 
 // inverse kinematic parameter
 class IPnlopt_kn0_xyz5A {
