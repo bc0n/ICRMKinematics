@@ -296,7 +296,7 @@ classdef inter2D
                   H03* obj.Ty(r*(1-cos(qp(4)*1.)))*obj.Tx(r*sin(qp(4)*1.))*obj.Rz(qp(4)*1.)*[0;0;0;1] ];
         end
          
-        function drawConfig(obj, qps, lcol )
+        function h = drawConfig(obj, qps, lcol )
             if nargin < 3;
                 lcol = [1,1,1];
             end
@@ -308,21 +308,22 @@ classdef inter2D
             %12
             xyz = [ h01*col, h01*obj.Ty( obj.drw.rProx)*col, h01*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
                     h01*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Ty(-obj.drw.rProx)*col, h01*col,h02*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            hs(1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
             xyz = [ h01*col, h01*obj.Tz( obj.drw.rProx)*col, h01*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
                     h01*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Tz(-obj.drw.rProx)*col, h01*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-b', 'color', lcol*.7);
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-b', 'color', lcol*.7);
             %23
             xyz = [ h02*col, h02*obj.Ty( obj.drw.rProx)*col, h02*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
                     h02*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Ty(-obj.drw.rProx)*col, h02*col,h03*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
             xyz = [ h02*col, h02*obj.Tz( obj.drw.rProx)*col, h02*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
                     h02*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Tz(-obj.drw.rProx)*col, h02*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
             %34
             qps(4) = qps(4) + obj.qp0(4);
             if qps(4) < 1e-3; qps(4) = 1e-3; end;
             r = obj.kns.lCath/qps(4); %radius of catheter arc
+            
             h3 = h03*obj.Tx(obj.drw.lRoll);
             cathPts = [ h3*col, h03*obj.Tz(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h03*obj.Tz(obj.drw.rCath)*col,...
                         h03*col,h03*obj.Ty(obj.drw.rCath)*col, h03*obj.Ty(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h3*col, ...
@@ -336,14 +337,18 @@ classdef inter2D
             h3* obj.Ty(r*(1-cos(qps(4)*.8)))*obj.Tx(r*sin(qps(4)*.8))*obj.Rz(qps(4)*.8)*col, ...
             h3* obj.Ty(r*(1-cos(qps(4)*.9)))*obj.Tx(r*sin(qps(4)*.9))*obj.Rz(qps(4)*.9)*col, ...
             h3* obj.Ty(r*(1-cos(qps(4)*1.)))*obj.Tx(r*sin(qps(4)*1.))*obj.Rz(qps(4)*1.)*col ];
-            plot3( cathPts(1,:),cathPts(2,:),cathPts(3,:), '.-', 'color', lcol*1);
+            hs(end+1) = plot3( cathPts(1,:),cathPts(2,:),cathPts(3,:), '.-', 'color', lcol*1);
             
             %45
             xyz = [ h04*col, h05*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
             xyz = [ h04*col, h05*col];
-            plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
             
+            hs(1).DisplayName = 'drawCath';
+            for i = 2:length(hs); hs(i).HandleVisibility = 'off'; end
+            linkprop(hs, 'Visible');
+            h = hs(1);
         end
 
     end %dynamic methods

@@ -69,7 +69,6 @@ classdef inter2D_kn11A_dll < inter2D
         end
         
         function varargout = forwardK(obj, qps, kn)
-            disp(nargout)
             if nargin < 3
                 kn = obj.kns;
             end
@@ -131,7 +130,7 @@ classdef inter2D_kn11A_dll < inter2D
             nlArray = obj.nlStruct2Array(obj.opts);
             
             tic
-            [ret,~,~,~,knEst,a,b,c,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, nlArray, 1e3)
+            [ret,~,~,~,knEst,a,b,c,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, nlArray, 1e3);
             res.telapsed = toc;
             res.ret = ret;
             res.kn0 = obj.knArray2Struct(knEst);
