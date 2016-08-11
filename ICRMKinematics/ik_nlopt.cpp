@@ -1133,7 +1133,7 @@ nlopt::algorithm ikTranslateNLOptAlg(nlMethod method) {
 	//std::cout << "recv " << method << std::endl;
 	switch (method) {
 	case nlMethod::GN_DIRECT: return nlopt::GN_DIRECT; //0
-	case nlMethod::GN_DIRECT_L: return nlopt::GN_DIRECT;//1
+	case nlMethod::GN_DIRECT_L: return nlopt::GN_DIRECT_L;//1
 	case nlMethod::GN_DIRECT_L_NOSCAL: return nlopt::GN_DIRECT_L_NOSCAL;//2
 	case nlMethod::GN_DIRECT_L_RAND: return nlopt::GN_DIRECT_L_RAND;//3
 	case nlMethod::GN_DIRECT_L_RAND_NOSCAL: return nlopt::GN_DIRECT_L_RAND_NOSCAL;//4

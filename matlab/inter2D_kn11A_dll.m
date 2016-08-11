@@ -26,11 +26,16 @@ classdef inter2D_kn11A_dll < inter2D
             % Algs
             %          00;  GN_DIRECT
             %          01;  GN_DIRECT_L --locally biased
+            %          02;  GN_DIRECT_L_NOSCAL
             %          03;  GN_DIRECT_L_RAND
-            %          04;  GN_ESCH
-            %          05;  GN_ISRES
-            %          06;  GN_MLSL -- slow due to local searches
-            %          07;  GN_MLSL_LDS
+            %          04;  GN_DIRECT_L_RAND_NOSCAL
+            %          05;  GN_DIRECT_NOSCAL
+            %          06;  GN_ESCH
+            %          07;  GN_ISRES
+            %          08;  GN_MLSL -- slow due to local searches
+            %          09;  GN_MLSL_LDS
+            %          10;  GN_ORIG_DIRECT
+            %          11;  GN_ORIG_DIRECT_L
             %          12;  LN_BOBYQA
             %          13;  LN_COBYLA
             %          14;  LN_NelderMead
@@ -128,9 +133,10 @@ classdef inter2D_kn11A_dll < inter2D
             if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
             
             nlArray = obj.nlStruct2Array(obj.opts);
+            fmin = 1111111.1;
             
             tic
-            [ret,~,~,~,knEst,a,b,c,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, nlArray, 1e3);
+            [ret,~,~,~,knEst,~,~,~,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, nlArray, fmin);
             res.telapsed = toc;
             res.ret = ret;
             res.kn0 = obj.knArray2Struct(knEst);

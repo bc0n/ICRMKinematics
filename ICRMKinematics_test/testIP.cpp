@@ -46,20 +46,20 @@ void init() {
 	nlArray[4] = 1e-9; // tol fun
 	nlArray[5] = 1e-9; //tol x
 	//nlArray[2] = 00; // GN_DIRECT
-	//nlArray[2] = 01; // GN_DIRECT_L --locally biased
+	nlArray[2] = 01; // GN_DIRECT_L --locally biased
 	//nlArray[2] = 03; // GN_DIRECT_L_RAND
 	//nlArray[2] = 04; // GN_ESCH
 	//nlArray[2] = 05; // GN_ISRES
 	//nlArray[2] = 06; // GN_MLSL -- slow due to local searches
 	//nlArray[2] = 07; // GN_MLSL_LDS
 	//nlArray[2] = 12; // LN_BOBYQA
-	nlArray[2] = 13; // LN_COBYLA
+	//nlArray[2] = 13; // LN_COBYLA
 	//nlArray[2] = 14; // LN_NelderMead
 	//nlArray[2] = 17; // LN_PRAXIS
 	//nlArray[2] = 18; // LN_SUBPLX
 }
 
-void load38Row(char *fname) {
+void load38Col(char *fname) {
 	int ncols = 38; //it, q0,q1,q2,q3,q4, H1, H2
 
 	//open
@@ -117,11 +117,12 @@ void load38Row(char *fname) {
 	printf("x[%+5.4f %+5.4f %+5.4f]\n", stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2]);
 	}//*/
 }
+
 //analogue of readDatXml.m version b34190bdaf4ac4bc3d9bd6a6c7349f01b7593d61, not parsing the xml
 void loadColumnDat(char *fname) {
 	printf("\n\nOpening %s\n", fname);
 	std::fstream fs;
-	fs.open(fname, std::fstream::in | std::fstream::binary); //name, read/write mode|binary
+	fs.open(fname, std::fstream::in | std::fstream::binary);
 	if (!fs) { std::cerr << "warning, could not open " << fname << std::endl; return; };
 
 	//fileSize & initialize variables
@@ -199,6 +200,67 @@ void loadColumnDat(char *fname) {
 	//for (int i = 0; i < 10; i++) { printf("%8.5f ", stackedX[i]); } printf("\n");
 	//for (int i = 3*nb-10; i < 3*nb; i++) { printf("%8.5f ", stackedU[i]); } printf("\n"); //d.Hms(end-3:end,1:3,1)'
 	//for (int i = 3*nb-10; i < 3*nb; i++) { printf("%8.5f ", stackedX[i]); } printf("\n");
+}
+
+void loadNQXU(char *fname) {
+	printf("\n\nOpening %s\n", fname);
+	std::fstream fs;
+	fs.open(fname, std::fstream::in | std::fstream::binary);
+	if (!fs) { std::cerr << "warning, could not open " << fname << std::endl; return; };
+
+	//fileSize & initialize variables
+	fs.seekg(0, fs.end);
+	long fileSize = (long)fs.tellg();
+	fs.seekg(0, fs.beg);
+	printf("fileSize %d\n", fileSize);
+	buffer = new char[fileSize];
+
+	//read
+	fs.read(buffer, fileSize);
+	printf("read %d chars\n\n", (int)fs.gcount());
+	fs.close();
+
+	//extract-- format is fwrite( [n, reshape(qps,1,n*5), reshape(Hms(:,1:3,4),1,n*3), reshape(Hms(:,1:3,1),1,n*3) ] )
+	double *pd = reinterpret_cast<double*>(buffer); //buffer is a byte array, but we know it to be double data
+	nrows = (int)pd[0]; //number of points in each of qps, xyz, uxyz	
+
+	//for (int i = 0; i < 100; i++) { std::cout << *(pd + i + nrows*5) << "\n"; } std::cout << std::endl;
+
+	stackedQ = new double[nrows * 5];
+	stackedU = new double[nrows * 3];
+	stackedX = new double[nrows * 3];
+
+	for (int i = 0; i < nrows * 5; i++) {
+		stackedQ[i] = -7.7;
+	}
+	for (int i = 0; i < nrows * 3; i++) {
+		stackedX[i] = -8.8;
+	}
+	for (int i = 0; i < nrows * 3; i++) {
+		stackedU[i] = -9.9;
+	}
+
+	for (int i = 0; i < nrows; i++) {
+		stackedQ[i * 5 + 0] = *(pd + 1+0 + i*5);
+		stackedQ[i * 5 + 1] = *(pd + 1+1 + i*5);
+		stackedQ[i * 5 + 2] = *(pd + 1+2 + i*5);
+		stackedQ[i * 5 + 3] = *(pd + 1+3 + i*5);
+		stackedQ[i * 5 + 4] = *(pd + 1+4 + i*5);
+
+		stackedX[i * 3 + 0] = *(pd + 1+nrows*5+0 + i*3);
+		stackedX[i * 3 + 1] = *(pd + 1+nrows*5+1 + i*3);
+		stackedX[i * 3 + 2] = *(pd + 1+nrows*5+2 + i*3);
+
+		stackedU[i * 3 + 0] = *(pd + 1+nrows*5+nrows*3+0 + i*3);
+		stackedU[i * 3 + 1] = *(pd + 1+nrows*5+nrows*3+1 + i*3);
+		stackedU[i * 3 + 2] = *(pd + 1+nrows*5+nrows*3+2 + i*3);
+	}
+	//for (int i = 0; i < 100; i++) {
+	//	printf("i[ %d ] q[%8.4f %8.4f %8.4f %8.4f %8.4f] x[%8.4f %8.4f %8.4f] u[%8.4f %8.4f %8.4f]\n", i, stackedQ[i * 5 + 0], stackedQ[i * 5 + 1], stackedQ[i * 5 + 2], stackedQ[i * 5 + 3], stackedQ[i * 5 + 4], stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2], stackedU[i * 3 + 0], stackedU[i * 3 + 1], stackedU[i * 3 + 2]);
+	//}
+	//for (int i = nrows-100; i < nrows; i++) {
+	//	printf("i[ %d ] q[%8.4f %8.4f %8.4f %8.4f %8.4f] x[%8.4f %8.4f %8.4f] u[%8.4f %8.4f %8.4f]\n", i, stackedQ[i * 5 + 0], stackedQ[i * 5 + 1], stackedQ[i * 5 + 2], stackedQ[i * 5 + 3], stackedQ[i * 5 + 4], stackedX[i * 3 + 0], stackedX[i * 3 + 1], stackedX[i * 3 + 2], stackedU[i * 3 + 0], stackedU[i * 3 + 1], stackedU[i * 3 + 2]);
+	//}
 }
 
 void check_qp0_xyz5a() {
@@ -377,13 +439,15 @@ void check_qp0kn0_xyzuxuyuz11A() {
 
 void main() {
 	init();
-	//load38Row("testSquareQps.dat");
-	loadColumnDat("testSquareXYZ_i0_n2942_160622_191046.dat");
+	//load38Col("testSquareQps.dat");
+	//loadColumnDat("testSquareXYZ_i0_n2942_160622_191046.dat");
+	loadNQXU("forTestIPCpp.dat");
+
 
 	//check_qp0_xyz5a();
 	//check_qp0_xyzuxuyuz5a();
-	check_kn0_xyz5a();
-	check_kn0_xyz11a();
+	//check_kn0_xyz5a();
+	//check_kn0_xyz11a();
 	check_kn0_xyzuxuyuz11a();
 	//check_qp0kn0_xyz5a_flipflop();
 	//check_qp0kn0_xyz5A();

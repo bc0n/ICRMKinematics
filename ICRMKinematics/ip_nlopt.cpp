@@ -70,6 +70,12 @@ int IPnlopt_qp0_xyz5A::estimate(int nSamps, double *stackedQ, double *stackedX, 
 	fip.fk = (void*)&fk;
 	void *vfip = &fip;
 	alg.set_min_objective(err_qp0_xyz5A, vfip);
+	
+	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(5);
+	for (int i = 0; i < 5; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	// set initial step size (only used by nongradient methods)
 	//
@@ -233,6 +239,12 @@ int IPnlopt_qp0_xyzuxuyuz5A::estimate(int nSamps, double *stackedQ, double *stac
 	alg.set_min_objective(err_qp0_xyzuxuyuz5A, vfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(5);
+	for (int i = 0; i < 5; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
+
+	// set initial step size (only used by nongradient methods)
 	//
 
 	//set boundary constraints
@@ -394,10 +406,14 @@ int IPnlopt_qp0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 	alg.set_min_objective(err_qp0_xyzuxuyuz11A, vfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 	
 	//set boundary constraints
-	std::vector<double> limup(5), limdn(5);
-	for (int i = 0; i < 5; i++) {
+	std::vector<double> limup(11), limdn(11);
+	for (int i = 0; i < 11; i++) {
 		limup[i] = qpup[i];
 		limdn[i] = qpdn[i];
 	}
@@ -405,8 +421,8 @@ int IPnlopt_qp0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 	alg.set_lower_bounds(limdn);
 
 	// set start x to be within bounds
-	std::vector<double> x(5);
-	for (int i = 0; i < 5; i++) {
+	std::vector<double> x(11);
+	for (int i = 0; i < 11; i++) {
 		x[i] = qp0[i];
 		if (x[i] <= limdn[i]) {
 			x[i] = limdn[i];
@@ -479,7 +495,6 @@ int IPnlopt_qp0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 
 	return res;
 }
-
 
 
 // inverse parameter
@@ -569,6 +584,10 @@ int IPnlopt_kn0_xyz5A::estimate(int nSamps, double *stackedQ, double *stackedX, 
 	alg.set_min_objective(err_kn0_xyz5A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(5);
+	for (int i = 0; i < 5; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints
 	//      0  1  2  3  4
@@ -745,6 +764,10 @@ int IPnlopt_kn0_xyz11A::estimate(int nSamps, double *stackedQ, double *stackedX,
 	alg.set_min_objective(err_kn0_xyz11A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints
 	//x = [tx01,ty01,tz01,ry01,rz01,ry34,rz34,kAlpha,eAlpha,lcath,ry45]
@@ -930,6 +953,10 @@ int IPnlopt_kn0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 	alg.set_min_objective(err_kn0_xyzuxuyuz11A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints
 	//x = [tx01,ty01,tz01,ry01,rz01,ry34,rz34,kAlpha,eAlpha,lcath,ry45]
@@ -997,8 +1024,9 @@ int IPnlopt_kn0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 
 	// solve
 	nlopt::result res;
+	double fval = 110;
 	try {
-		res = alg.optimize(x, *fmin);
+		res = alg.optimize(x, fval);
 	}
 	catch (nlopt::roundoff_limited e) {
 		res = nlopt::FAILURE;
@@ -1020,11 +1048,24 @@ int IPnlopt_kn0_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *sta
 		res = nlopt::FAILURE;
 		std::cout << "Caught: " << e.what() << std::endl;
 	}
+	*fmin = fval;
 	*fmin /= nSamps;
 	// unpack from solver
 	for (int i = 0; i < 11; i++) {
 		kn0[i] = x[i];
 	}
+
+
+	FILE *fid;
+	fopen_s(&fid, "estimate_kn0_xyzuxuyuz11A.txt", "w+");
+	fprintf(fid, "ret %d fval %f / nsamps %d = fmin %f kn:\n", res, fval, nSamps, *fmin);
+	for (int i = 0; i < 11; i++) {
+		fprintf(fid, "%f ", kn0[i]);
+	}
+	fclose(fid);
+
+
+
 	return res;
 }
 
@@ -1114,6 +1155,10 @@ int IPnlopt_qp0kn0_xyz5A::estimate(int nSamps, double *stackedQ, double *stacked
 	alg.set_min_objective(err_qp0kn0_xyz5A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(5);
+	for (int i = 0; i < 5; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints
 	//      0  1  2  3  4     5    6    7    8     9
@@ -1326,6 +1371,10 @@ int InvPNLOpt_xyzdotu11A::estimate(int nSamps, double *stackedQ, double *stacked
 	alg.set_min_objective(funUX11A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints based on qpLast and stdev
 	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
@@ -1538,12 +1587,16 @@ int InvPNLOpt_xyzpp11A::estimate(int nSamps, double *stackedQ, double *stackedX,
 
 	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), 16); //there are 5 qps + 11 kinematic params in knParams11A
 
-															  // set objective
+	// set objective
 	void *pfip;
 	pfip = &fip;
 	alg.set_min_objective(funxyzpp11A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints based on qpLast and stdev
 	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
@@ -1747,6 +1800,10 @@ int InvPNLOpt_xyzuxuyuz5A::estimate(int nSamps, double *stackedQ, double *stacke
 	alg.set_min_objective(err_qp0kn0_xyzuxuyuz5A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(5);
+	for (int i = 0; i < 5; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints based on qpLast and stdev
 	//      0  1  2  3  4     5    6    7    8      9
@@ -1847,7 +1904,6 @@ int InvPNLOpt_xyzuxuyuz5A::estimate(int nSamps, double *stackedQ, double *stacke
 	return res;
 }
 
-
 double err_xyzuxuyuz11A(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
 	FIPDATA *pfip;
 	pfip = (FIPDATA*)fipData;
@@ -1945,6 +2001,10 @@ int InvPNLOpt_xyzuxuyuz11A::estimate(int nSamps, double *stackedQ, double *stack
 	alg.set_min_objective(err_xyzuxuyuz11A, pfip);
 
 	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(11);
+	for (int i = 0; i < 11; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
 
 	//set boundary constraints based on qpLast and stdev
 	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
@@ -2070,7 +2130,7 @@ nlopt::algorithm ipTranslateNLOptAlg(nlMethod method) {
 	//std::cout << "recv " << method << std::endl;
 	switch (method) {
 	case nlMethod::GN_DIRECT: return nlopt::GN_DIRECT; //0
-	case nlMethod::GN_DIRECT_L: return nlopt::GN_DIRECT;//1
+	case nlMethod::GN_DIRECT_L: return nlopt::GN_DIRECT_L;//1
 	case nlMethod::GN_DIRECT_L_NOSCAL: return nlopt::GN_DIRECT_L_NOSCAL;//2
 	case nlMethod::GN_DIRECT_L_RAND: return nlopt::GN_DIRECT_L_RAND;//3
 	case nlMethod::GN_DIRECT_L_RAND_NOSCAL: return nlopt::GN_DIRECT_L_RAND_NOSCAL;//4
