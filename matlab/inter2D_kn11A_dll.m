@@ -105,7 +105,7 @@ classdef inter2D_kn11A_dll < inter2D
         function res = estimate_qp0_xyzuxuyuz(obj, qps, Hs, kn0, qp0,qpup,qpdn )
             n = numel(qps)/obj.nums.qps;
             
-            stackedQ = reshape(qps, n*obj.nums.qps,1);
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
             stackedX = reshape(Hs(:,1:3,4)', n*3,1);
             stackedU = reshape(Hs(:,1:3,1)', n*3,1);
             qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
@@ -125,7 +125,7 @@ classdef inter2D_kn11A_dll < inter2D
         function res = estimate_kn0_xyzuxuyuz(obj, qps, Hs, kn0,knup,kndn )
             n = numel(qps)/obj.nums.qps;
             
-            stackedQ = reshape(qps, n*obj.nums.qps,1);
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
             stackedX = reshape(Hs(:,1:3,4)', n*3,1);
             stackedU = reshape(Hs(:,1:3,1)', n*3,1);
             if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
@@ -147,7 +147,7 @@ classdef inter2D_kn11A_dll < inter2D
         function res = estimate_qp0kn0_xyzuxuyuz(obj, qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
             n = numel(qps)/obj.nums.qps;
             
-            stackedQ = reshape(qps, n*obj.nums.qps,1);
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
             stackedX = reshape(Hs(:,1:3,4)', n*3,1);
             stackedU = reshape(Hs(:,1:3,1)', n*3,1);
             qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
