@@ -7,7 +7,6 @@ FwdK11A::FwdK11A(KINEMATICPARAMS11A inParams) {
 	kinParams = inParams;
 }
 Eigen::Matrix4d FwdK11A::qps2H01(double *qps) {
-
 	Eigen::Matrix4d Rxyz;
 	Rxyz.setIdentity();
 	Rxyz(0, 3) = kinParams.tx01;

@@ -3,8 +3,6 @@
 #ifndef CICRM
 #define CICRM
 
-
-
 // building a DLL
 #define DLLIMPORT __declspec (dllexport)
 
@@ -14,7 +12,6 @@ extern "C" { // using a C++ compiler
 
 	typedef struct kinematics kinematics; //make class opaque to the wrapper---why do we want this?
 	//DLLIMPORT kinematics* createKinematics(void); apparently not needed
-
 
 	DLLIMPORT int get5AH01(double *qps, double *kinArray, double *arrayH01);
 	DLLIMPORT int get5AH02(double *qps, double *kinArray, double *arrayH02);
@@ -45,13 +42,15 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int getTask11A_xyzuxuyuz(double *qps, double *kinArray, double *xyz, double *uxyz);
 	
 	//funs
-	DLLIMPORT int fun_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn5a, double *qp0, double *fmin);
-	DLLIMPORT int fun_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn5a, double *qp0, double *fmin);
-	DLLIMPORT int fun_kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
-	DLLIMPORT int fun_kn0_xyz11A(int nSamps, double *stackedQ, double *stackedX, double *kn0, double *fmin);
-	DLLIMPORT int fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin);
-	DLLIMPORT int fun_qp0kn0_xyzdotu11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
-	DLLIMPORT int fun_qp0kn0_xyzpp11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *pms0, double *fmin);
+	DLLIMPORT int fun_qp0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin);
+	DLLIMPORT int fun_qp0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin);
+	DLLIMPORT int fun_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin);
+	DLLIMPORT int fun_kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin);
+	DLLIMPORT int fun_kn0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin);
+	DLLIMPORT int fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin);
+	DLLIMPORT int fun_qp0kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin);
+	DLLIMPORT int fun_qp0kn0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin);
+	DLLIMPORT int fun_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin);
 
 	// optimizers
 	// search begins from kns|qps|xyz, result returned there
@@ -76,21 +75,19 @@ extern "C" { // using a C++ compiler
 	DLLIMPORT int estimate_qps_xyzuxuyuz11A(double *qps, double *kinArray, double *nlArray, double *jntArray, double *xyz, double *uxyz, double *fmin);
 
 	//initial joint angle estimation
-	DLLIMPORT int estimate_qp0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn5a, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn, double *qp0, double *qpup, double *qpdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *nlArray, double *fmin);
 
 	//inverse paramameter estimation
-	DLLIMPORT int estimate_kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_kn0_xyz11A(      int nSamps, double *stackedQ, double *stackedX, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_kn0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
 	DLLIMPORT int estimate_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin);
 
 	//simultaneous inverse parameter and initial joint estimation
-	DLLIMPORT int estimate_qp0kn0_xyz5A(       int nSamps, double *stackedQ, double *stackedX, double *kn0, double *k5up, double *k5dn, double *qp0, double *qpupdn, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzdotu11A(  int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzpp11A(    int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k50,  double *k5up,  double *k5dn,  double *qp0, double *q0Lims, double *nlArray, double *fmin);
-	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *k110, double *k11up, double *k11dn, double *qp0, double *q0Lims, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *k50, double *k5up, double *k5dn,  double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A( int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *k60, double *k6up, double *k6dn, double *nlArray, double *fmin);
+	DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *k110, double *k11up, double *k11dn, double *nlArray, double *fmin);
 
 
 #ifdef __cplusplus

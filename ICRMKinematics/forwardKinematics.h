@@ -10,6 +10,7 @@ private:
 	PHYSICALDIMENSIONS physicalDims;
 public:
 	KINEMATICPARAMS5A kinParams;
+	int nParams = 5;
 
 	FwdK5A(); //use default kinematic params
 	FwdK5A(KINEMATICPARAMS5A inParams); //specified
@@ -27,6 +28,7 @@ private:
 	PHYSICALDIMENSIONS physicalDims;
 public:
 	KINEMATICPARAMS6A kinParams;
+	int nParams = 6;
 
 	FwdK6A(); //use default kinematic params
 	FwdK6A(KINEMATICPARAMS6A inParams);
@@ -44,6 +46,7 @@ private:
 	PHYSICALDIMENSIONS physicalDims;
 public:
 	KINEMATICPARAMS11A kinParams;
+	int nParams = 11;
 
 	FwdK11A(); // default params
 	FwdK11A(KINEMATICPARAMS11A inParams);

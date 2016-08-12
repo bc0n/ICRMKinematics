@@ -24,6 +24,7 @@ typedef struct tagKINEMATICPARAMS5A {
 	double tz01 = -28;
 	double rz01 = -.24;
 	double lCath = 95; //[mm] straight length
+	static const int nParams = 5;
 } KINEMATICPARAMS5A;
 
 typedef struct tagKINEMATICPARAMS6A {
@@ -39,6 +40,7 @@ typedef struct tagKINEMATICPARAMS6A {
 	double rz01 = -0.26;
 	double ry34 = 0.0;
 	double lCath = 95; //[mm] straight length
+	static const int nParams = 6;
 } KINEMATICPARAMS6A;
 
 typedef struct tagKINEMATICPARAMS11A {
@@ -54,6 +56,7 @@ typedef struct tagKINEMATICPARAMS11A {
 	double eAlpha = 1; //alpha exponent
 	double lCath = 95; //[mm] straight length
 	double ry45 = 0;
+	static const int nParams = 11;
 } KINEMATICPARAMS11A;
 
 typedef struct tagJOINTLIMITS {
