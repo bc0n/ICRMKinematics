@@ -8,6 +8,16 @@ InvP_nlopt<KPMS, TFK>::InvP_nlopt() {
 	KPMS kdn;
 	JOINTLIMITS q0Lims;
 	NLOPTPARAMS nlParams;
+
+	bool knSub[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		knSub[i] = true;
+	}
+	knSubset = knSub;
+
+	double knDft[kup.nParams];
+	kinematicStruct2Array(&kup, knDft);
+	knDefault = knDft;
 }
 template <class KPMS, class TFK>
 InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg) {
@@ -15,7 +25,30 @@ InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsAr
 	kdn = kdnArg;
 	q0Lims = q0LimsArg;
 	nlParams = nlArg;
+
+	static bool knSub[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		knSub[i] = true;
+	}
+	knSubset = knSub;
+
+	double knDft[kup.nParams];
+	kinematicStruct2Array(&kup, knDft);
+	knDefault = knDft;
 }
+template <class KPMS, class TFK>
+InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg) {
+	kup = kupArg;
+	kdn = kdnArg;
+	q0Lims = q0LimsArg;
+	nlParams = nlArg;
+	knSubset = knSubsetArg;
+
+	double knDft[kup.nParams];
+	kinematicStruct2Array(&kup, knDft);//the non-estimated have kup=kdn
+	knDefault = knDft;	
+}
+
 
 // qp0
 template <class KPMS, class TFK>
@@ -64,9 +97,8 @@ void InvP_nlopt<KPMS, TFK>::funQp(int nSamps, double *stackedQ, double *stackedU
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
-	KPMS kp;
-	kinematicArray2Struct(kn0, kp);
-	TFK fk(kp);
+
+	TFK fk(kn0);
 	fip.fk = &fk;
 	
 	std::vector<double> x(kup.nParams);
@@ -83,7 +115,7 @@ int InvP_nlopt<KPMS, TFK>::estimateQp(int nSamps, double *stackedQ, double *stac
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
 	KPMS kp;
-	kinematicArray2Struct(kn0, kp);
+	kinematicArray2Struct(kn0, &kp);
 	TFK fk(kp);
 	fip.fk = &fk;
 
@@ -198,17 +230,21 @@ double err_Kn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &grad,
 	double qps[5];
 	double accum = 0.0;
 
-	//        0    1    2    3    4     5     6    7     8     9   10
 	//x = [tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
 	KPMS kp;
 	double kna[kp.nParams];
+	int ix = 0; // since nX <= nParams, need a separate index
 	for (int i = 0; i < kp.nParams; i++) {
-		kna[i] = x[i]; //kn params follow the q0s
+		if (pfip->knSubset[i]) {
+			kna[i] = x[ix]; //kn params follow the q0s
+			ix++;
+		}else {
+			kna[i] = pfip->knDefault[i];
+		}
 	}
-	kinematicArray2Struct(kna, kp);
 
 	// FK with the new params
-	TFK fk(kp);
+	TFK fk(kna);
 
 	//calculate error over all samps
 	Eigen::Matrix4d Hnew;
@@ -246,11 +282,14 @@ void InvP_nlopt<KPMS, TFK>::funKn(int nSamps, double *stackedQ, double *stackedU
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
+
 
 	std::vector<double> x(kup.nParams);
 	for (int i = 0; i < kup.nParams; i++) { x[i] = kn0[i]; }
 
-	*fmin = err_QpKn_xyzuxuyuz<KPMS, TFK>(x, x, &fip);
+	*fmin = err_Kn_xyzuxuyuz<KPMS, TFK>(x, x, &fip);
 }
 
 template <class KPMS, class TFK>
@@ -260,41 +299,58 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
+
+	// find objective length
+	int iX = 0;
+	int numX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i])
+			numX++;
+	}
 
 	// get an alg object
-	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), kup.nParams); //there are 5 qps + 11 kinematic params in knParams11A
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), numX);
 	
 	// set objective
 	void *pfip;
 	pfip = &fip;
 	alg.set_min_objective(err_Kn_xyzuxuyuz<KPMS, TFK>, pfip);
-
+	
 	// set initial step size (only used by nongradient methods)
-	std::vector<double> iniStep(kup.nParams);
-	for (int i = 0; i < kup.nParams; i++) { iniStep[i] = .001; }
+	std::vector<double> iniStep(numX);
+	for (int i = 0; i < numX; i++) { iniStep[i] = .001; }
 	alg.set_initial_step(iniStep);
 	alg.set_default_initial_step(iniStep);
-
-	//set boundary constraints based on qpLast and stdev
-	//      0  1  2  3  4     5    6    7    8    9    10
-	//x = [tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
-	std::vector<double> limup(kup.nParams);
-	std::vector<double> limdn(kup.nParams);
+	
+	//set boundary constraints
+	std::vector<double> limup(numX);
+	std::vector<double> limdn(numX);
 	double knaup[kup.nParams], knadn[kup.nParams];
-	kinematicStruct2Array(kup, knaup);
-	kinematicStruct2Array(kdn, knadn);
+	kinematicStruct2Array(&kup, knaup);
+	kinematicStruct2Array(&kdn, knadn);
+	iX = 0;
 	for (int i = 0; i < kup.nParams; i++) {
-		limup[i] = knaup[i];
-		limdn[i] = knadn[i];
+		if (knSubset[i]) {
+			limup[iX] = knaup[i];
+			limdn[iX] = knadn[i];
+			iX++;
+		}
 	}
-
 	alg.set_upper_bounds(limup);
 	alg.set_lower_bounds(limdn);
 
-	// set start x to start within bounds
-	std::vector<double> x(kup.nParams);
-	for (int i = 0; i < kup.nParams; i++) { x[i] = kn0[i]; }
+	// set start x to be within bounds
+	std::vector<double> x(numX);
+	iX = 0;
 	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			x[iX] = kn0[i];
+			iX++;
+		}
+	}
+	for (int i = 0; i < numX; i++) {
 		if (x[i] <= limdn[i]) {
 			x[i] = limdn[i];
 		}
@@ -302,7 +358,7 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 			x[i] = limup[i];
 		}
 	}
-
+	
 	// set stopping criteria
 	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
 	alg.set_ftol_abs(nlParams.tolFunAbs);
@@ -325,7 +381,7 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 
 		alg.set_local_optimizer(lAlg);
 	}
-
+	
 	// solve
 	nlopt::result res;
 	try {
@@ -345,7 +401,9 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 	}
 	catch (std::invalid_argument e) {
 		res = nlopt::FAILURE;
-		printf("Caught: %s for x=[ %4.4f %4.4f %4.4f %4.4f %4.4f...]\n", e.what(), x[0], x[1], x[2], x[3], x[4]);
+		printf("Caught: %s for x=[", e.what());
+		for (int i = 0; i < numX; i++) { printf("%f ", x[i]); }
+		printf("]\n");
 	}
 	catch (std::bad_alloc e) {
 		res = nlopt::FAILURE;
@@ -353,7 +411,13 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 	}
 
 	// unpack from solver
-	for (int i = 0; i < kup.nParams; i++) { kn0[i] = x[i]; }
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			kn0[i] = x[iX];
+			iX++;
+		}
+	}
 	*fmin /= nSamps;
 
 	return res;
@@ -369,17 +433,21 @@ double err_QpKn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &gra
 	double qps[5];
 	double accum = 0.0;
 
-	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
 	//x = [q0,q1,q2,q3,q4, tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
 	KPMS kp;
 	double kna[kp.nParams];
+	int ix = 0; // since nX <= nParams, need a separate index
 	for (int i = 0; i < kp.nParams; i++) {
-		kna[i] = x[5 + i]; //kn params follow the q0s
+		if ( pfip->knSubset[i]) {
+			kna[i] = x[5 + ix]; //kn params follow the q0s
+			ix++;
+		}else {
+			kna[i] = pfip->knDefault[i];
+		}
 	}
-	kinematicArray2Struct(kna, kp);
-	
+
 	// FK with the new params
-	TFK fk(kp);
+	TFK fk(kna);
 
 	//calculate error over all samps
 	Eigen::Matrix4d Hnew;
@@ -417,6 +485,8 @@ void InvP_nlopt<KPMS, TFK>::funQpKn(int nSamps, double *stackedQ, double *stacke
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
 
 	std::vector<double> x(nQps + kup.nParams);
 	for (int i = 0; i < nQps; i++) { x[i] = qp0[i]; }
@@ -427,14 +497,25 @@ void InvP_nlopt<KPMS, TFK>::funQpKn(int nSamps, double *stackedQ, double *stacke
 
 template <class KPMS, class TFK>
 int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin) {
+	//fill optimization data struct
 	FIPDATA fip;
 	fip.nSamps = (const int)nSamps;
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
 	
+	// find objective length
+	int iX = 0;
+	int numX = nQps;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i])
+			numX++;
+	}
+
 	// get an alg object
-	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), nQps + kup.nParams); //there are 5 qps + n( kinematic params in knParams11A )
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), numX); //there are 5 qps + n( kinematic params in knParams11A )
 
 	// set objective
 	void *pfip;
@@ -442,36 +523,43 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	alg.set_min_objective(err_QpKn_xyzuxuyuz<KPMS,TFK>, pfip);
 
 	// set initial step size (only used by nongradient methods)
-	std::vector<double> iniStep(nQps + kup.nParams);
-	for (int i = 0; i < nQps + kup.nParams; i++) { iniStep[i] = .001; }
+	std::vector<double> iniStep(numX);
+	for (int i = 0; i < numX; i++) { iniStep[i] = .001; }
 	alg.set_initial_step(iniStep);
 	alg.set_default_initial_step(iniStep);
 
-	//set boundary constraints based on qpLast and stdev
-	//      0  1  2  3  4     5    6    7    8    9    10    11   12    13    14   15
-	//x = [q0,q1,q2,q3,q4, tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
-	std::vector<double> limup(nQps + kup.nParams);
-	std::vector<double> limdn(nQps + kup.nParams);
+	//set boundary constraints
+	std::vector<double> limup(numX);
+	std::vector<double> limdn(numX);
 	for (int i = 0; i < nQps; i++) {
 		limup[i] = q0Lims.up[i];
 		limdn[i] = q0Lims.dn[i];
 	}
 	double knaup[kup.nParams], knadn[kup.nParams];
-	kinematicStruct2Array(kup, knaup);
-	kinematicStruct2Array(kdn, knadn);
+	kinematicStruct2Array(&kup, knaup);
+	kinematicStruct2Array(&kdn, knadn);
+	iX = 0;
 	for (int i = 0; i < kup.nParams; i++) {
-		limup[nQps + i] = knaup[i];
-		limdn[nQps + i] = knadn[i];
+		if (knSubset[i]) {
+			limup[nQps + iX] = knaup[i];
+			limdn[nQps + iX] = knadn[i];
+			iX++;
+		}
 	}
-
 	alg.set_upper_bounds(limup);
 	alg.set_lower_bounds(limdn);
-
+	
 	// set start x to be within bounds
-	std::vector<double> x(nQps + kup.nParams);
+	std::vector<double> x(numX);
 	for (int i = 0; i < nQps; i++) { x[i] = qp0[i]; }
-	for (int i = 0; i < kup.nParams; i++) { x[nQps + i] = kn0[i]; }
-	for (int i = 0; i < nQps + kup.nParams; i++) {
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			x[nQps + iX] = kn0[i];
+			iX++;
+		}
+	}
+	for (int i = 0; i < numX; i++) {
 		if (x[i] <= limdn[i]) {
 			x[i] = limdn[i];
 		}
@@ -502,7 +590,7 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 
 		alg.set_local_optimizer(lAlg);
 	}
-
+	
 	// solve
 	nlopt::result res;
 	try {
@@ -523,7 +611,7 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	catch (std::invalid_argument e) {
 		res = nlopt::FAILURE;
 		printf("Caught: %s for x=[", e.what());
-		for (int i = 0; i < nQps + kup.nParams; i++) { printf("%f ", x[i]); }
+		for (int i = 0; i < numX; i++) { printf("%f ", x[i]); }
 		printf("]\n");
 	}
 	catch (std::bad_alloc e) {
@@ -533,7 +621,13 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	
 	// unpack from solver
 	for (int i = 0; i < nQps; i++) { qp0[i] = x[i]; }
-	for (int i = 0; i < kup.nParams; i++) { kn0[i] = x[nQps + i]; }
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			kn0[i] = x[nQps + iX];
+			iX++;
+		}
+	}
 	*fmin /= nSamps;
 
 	return res;
@@ -541,64 +635,67 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 
 
 
-//Struct to Array
-void kinematicStruct2Array(KINEMATICPARAMS5A kns, double *kna) {
-	kna[0] = kns.tx01;
-	kna[1] = kns.ty01;
-	kna[2] = kns.tz01;
-	kna[3] = kns.rz01;
-	kna[4] = kns.lCath;
+
+
+
+//Kinematic parameter struct to array
+void kinematicStruct2Array(KINEMATICPARAMS5A *kns, double *kna) {
+	kna[0] = (*kns).tx01;
+	kna[1] = (*kns).ty01;
+	kna[2] = (*kns).tz01;
+	kna[3] = (*kns).rz01;
+	kna[4] = (*kns).lCath;
 }
-void kinematicStruct2Array(KINEMATICPARAMS6A kns, double *kna) {
-	kna[0] = kns.tx01;
-	kna[1] = kns.ty01;
-	kna[2] = kns.tz01;
-	kna[3] = kns.rz01;
-	kna[4] = kns.ry34;
-	kna[5] = kns.lCath;
+void kinematicStruct2Array(KINEMATICPARAMS6A *kns, double *kna) {
+	kna[0] = (*kns).tx01;
+	kna[1] = (*kns).ty01;
+	kna[2] = (*kns).tz01;
+	kna[3] = (*kns).rz01;
+	kna[4] = (*kns).ry34;
+	kna[5] = (*kns).lCath;
 }
-void kinematicStruct2Array(KINEMATICPARAMS11A kns, double *kna) {
-	kna[0] = kns.tx01;
-	kna[1] = kns.ty01;
-	kna[2] = kns.tz01;
-	kna[3] = kns.ry01;
-	kna[4] = kns.rz01;
-	kna[5] = kns.ry34;
-	kna[6] = kns.rz34;
-	kna[7] = kns.kAlpha;
-	kna[8] = kns.eAlpha;
-	kna[9] = kns.lCath;
-	kna[10] = kns.ry45;
+void kinematicStruct2Array(KINEMATICPARAMS11A *kns, double *kna) {
+	kna[0] = (*kns).tx01;
+	kna[1] = (*kns).ty01;
+	kna[2] = (*kns).tz01;
+	kna[3] = (*kns).ry01;
+	kna[4] = (*kns).rz01;
+	kna[5] = (*kns).ry34;
+	kna[6] = (*kns).rz34;
+	kna[7] = (*kns).kAlpha;
+	kna[8] = (*kns).eAlpha;
+	kna[9] = (*kns).lCath;
+	kna[10] = (*kns).ry45;
 }
 
-//Array to Struct
-void kinematicArray2Struct(double *kna, KINEMATICPARAMS5A kns) {
-	kns.tx01 = kna[0];
-	kns.ty01 = kna[1];
-	kns.tz01 = kna[2];
-	kns.rz01 = kna[3];
-	kns.lCath = kna[4];
+//Kinematic parameter array to struct
+void kinematicArray2Struct(double *kna, KINEMATICPARAMS5A *kns) {
+	(*kns).tx01 = kna[0];
+	(*kns).ty01 = kna[1];
+	(*kns).tz01 = kna[2];
+	(*kns).rz01 = kna[3];
+	(*kns).lCath = kna[4];
 }
-void kinematicArray2Struct(double *kna, KINEMATICPARAMS6A kns) {
-	kns.tx01 = kna[0];
-	kns.ty01 = kna[1];
-	kns.tz01 = kna[2];
-	kns.rz01 = kna[3];
-	kns.ry34 = kna[4];
-	kns.lCath = kna[5];
+void kinematicArray2Struct(double *kna, KINEMATICPARAMS6A *kns) {
+	(*kns).tx01 = kna[0];
+	(*kns).ty01 = kna[1];
+	(*kns).tz01 = kna[2];
+	(*kns).rz01 = kna[3];
+	(*kns).ry34 = kna[4];
+	(*kns).lCath = kna[5];
 }
-void kinematicArray2Struct(double *kna, KINEMATICPARAMS11A kns) {
-	kns.tx01 = kna[0];
-	kns.ty01 = kna[1];
-	kns.tz01 = kna[2];
-	kns.ry01 = kna[3];
-	kns.rz01 = kna[4];
-	kns.ry34 = kna[5];
-	kns.rz34 = kna[6];
-	kns.kAlpha = kna[7];
-	kns.eAlpha = kna[8];
-	kns.lCath = kna[9];
-	kns.ry45 = kna[10];
+void kinematicArray2Struct(double *kna, KINEMATICPARAMS11A *kns) {
+	(*kns).tx01 = kna[0];
+	(*kns).ty01 = kna[1];
+	(*kns).tz01 = kna[2];
+	(*kns).ry01 = kna[3];
+	(*kns).rz01 = kna[4];
+	(*kns).ry34 = kna[5];
+	(*kns).rz34 = kna[6];
+	(*kns).kAlpha = kna[7];
+	(*kns).eAlpha = kna[8];
+	(*kns).lCath = kna[9];
+	(*kns).ry45 = kna[10];
 }
 
 nlopt::algorithm ipTranslateNLOptAlg(nlMethod method) {

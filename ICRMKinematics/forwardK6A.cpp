@@ -3,6 +3,14 @@
 
 FwdK6A::FwdK6A() {
 }
+FwdK6A::FwdK6A(double *inArray) {
+	kinParams.tx01 = inArray[0];
+	kinParams.ty01 = inArray[1];
+	kinParams.tz01 = inArray[2];
+	kinParams.rz01 = inArray[3];
+	kinParams.ry34 = inArray[4];
+	kinParams.lCath = inArray[5];
+}
 FwdK6A::FwdK6A(KINEMATICPARAMS6A inParams) {
 	kinParams = inParams;
 }

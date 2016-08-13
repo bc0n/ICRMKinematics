@@ -19,10 +19,10 @@ typedef struct tagKINEMATICPARAMS5A {
 	//3 the proximal face of the roll, rotating about x2=x3
 	//4 the catheter tip, remote center about 
 	//5 translate along x4 the projected distance
-	double tx01 = 806;
-	double ty01 = -66;
-	double tz01 = -28;
-	double rz01 = -.24;
+	double tx01 = 766;
+	double ty01 = -112;
+	double tz01 = -14.7;
+	double rz01 = -.26;
 	double lCath = 95; //[mm] straight length
 	static const int nParams = 5;
 } KINEMATICPARAMS5A;

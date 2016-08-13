@@ -517,9 +517,7 @@ DLLIMPORT int estimate_qp0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *sta
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
 	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kinArray2Struct5A(kn0),kinArray2Struct5A(kn0), qp0Lims, nlParams);//knup & dn aren't used
-	//InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(knup, kndn, qp0Lims, nlParams);
 	return ip.estimateQp(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
-	//return 0;
 }
 DLLIMPORT int estimate_qp0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *nlArray, double *fmin) {
 	KINEMATICPARAMS6A knup; //default ok, not used
@@ -541,61 +539,117 @@ DLLIMPORT int estimate_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *st
 }
 
 // wrap inverse parameter solvers
-DLLIMPORT int estimate_kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS5A knup = kinArray2Struct5A(kup);
-	KINEMATICPARAMS5A kndn = kinArray2Struct5A(kdn);
+DLLIMPORT int estimate_kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
+	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(knup, kndn, qp0Lims, nlParams);
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
-DLLIMPORT int estimate_kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS6A knup = kinArray2Struct6A(kup);
-	KINEMATICPARAMS6A kndn = kinArray2Struct6A(kdn);
+DLLIMPORT int estimate_kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
+	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(knup, kndn, qp0Lims, nlParams);
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
-DLLIMPORT int estimate_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *kup, double *kdn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS11A knup = kinArray2Struct11A(kup);
-	KINEMATICPARAMS11A kndn = kinArray2Struct11A(kdn);
+DLLIMPORT int estimate_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
+	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(knup, kndn, qp0Lims, nlParams);
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, qp0Lims, nlParams);
+	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
+}
+
+DLLIMPORT int estimate_kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
+	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
+	JOINTLIMITS qp0Lims; //default ok, not used
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
+}
+DLLIMPORT int estimate_kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
+	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
+	JOINTLIMITS qp0Lims; //default ok, not used
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
+}
+DLLIMPORT int estimate_kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
+	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
+	JOINTLIMITS qp0Lims; //default ok, not used
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knSub, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
 
 // wrap joint qp0 & kn0
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *k5up, double *k5dn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS5A knup = kinArray2Struct5A(k5up);
-	KINEMATICPARAMS5A kndn = kinArray2Struct5A(k5dn);
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	
+	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
+	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
-
-	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(knup, kndn, qp0Lims, nlParams);
+	
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *k6up, double *k6dn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS6A knup = kinArray2Struct6A(k6up);
-	KINEMATICPARAMS6A kndn = kinArray2Struct6A(k6dn);
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
+	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(knup, kndn, qp0Lims, nlParams);
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *k110, double *k11up, double *k11dn, double *nlArray, double *fmin) {
-	KINEMATICPARAMS11A kp11up = kinArray2Struct11A(k11up);
-	KINEMATICPARAMS11A kp11dn = kinArray2Struct11A(k11dn);
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
+	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
+	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kp11up, kp11dn, qp0Lims, nlParams);
-	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, k110, fmin);
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
+	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
+	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
+	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
 
 KINEMATICPARAMS5A kinArray2Struct5A(double *kinArray) {

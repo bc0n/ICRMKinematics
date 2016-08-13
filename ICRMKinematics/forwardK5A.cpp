@@ -3,6 +3,13 @@
 
 FwdK5A::FwdK5A() {
 }
+FwdK5A::FwdK5A(double *inArray) {
+	kinParams.tx01 = inArray[0];
+	kinParams.ty01 = inArray[1];
+	kinParams.tz01 = inArray[2];
+	kinParams.rz01 = inArray[3];
+	kinParams.lCath = inArray[4];
+}
 FwdK5A::FwdK5A(KINEMATICPARAMS5A inParams) {
 	kinParams = inParams;
 }

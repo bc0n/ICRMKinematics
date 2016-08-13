@@ -52,14 +52,14 @@ void init() {
 	nlArray[4] = 1e-9; // tol fun
 	nlArray[5] = 1e-9; //tol x
 	//nlArray[2] = 00; // GN_DIRECT
-	nlArray[2] = 01; // GN_DIRECT_L --locally biased
+	//nlArray[2] = 01; // GN_DIRECT_L --locally biased
 	//nlArray[2] = 03; // GN_DIRECT_L_RAND
 	//nlArray[2] = 04; // GN_ESCH
 	//nlArray[2] = 05; // GN_ISRES
 	//nlArray[2] = 06; // GN_MLSL -- slow due to local searches
 	//nlArray[2] = 07; // GN_MLSL_LDS
 	//nlArray[2] = 12; // LN_BOBYQA
-	//nlArray[2] = 13; // LN_COBYLA
+	nlArray[2] = 13; // LN_COBYLA
 	//nlArray[2] = 14; // LN_NelderMead
 	//nlArray[2] = 17; // LN_PRAXIS
 	//nlArray[2] = 18; // LN_SUBPLX
@@ -316,7 +316,6 @@ void check_kn0_xyzuxuyuz5a() {
 	for (int i = 0; i < 5; i++) { k5[i] = k50[i]; }
 
 	ret = fun_kn0_xyzuxuyuz5A(nrows, stackedQ, stackedX, stackedU, k5, &fmin); printf("val0 = %f\n", fmin);
-	
 	ret = estimate_kn0_xyzuxuyuz5A(nrows, stackedQ, stackedX, stackedU, k5, k5u, k5d, nlArray, &fmin);
 	
 	printf("ret %d  fmin %f\n", ret, fmin);
@@ -353,6 +352,62 @@ void check_kn0_xyzuxuyuz11a() {
 	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
 }
 
+void check_kn0_xyzuxuyuz5a_sub() {
+	double fmin = 220000;
+	printf("\nkn0_xyzuxuyuz5a_sub\n");
+	for (int i = 0; i < 5; i++) { k5[i] = k50[i]; }
+	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+
+	bool knSubset[] = { 1, 1, 1, 1, 1 };
+	//bool knSubset[] = { 0, 0, 0, 1, 1 };
+	//bool knSubset[] = { 0, 0, 0, 1, 1}; //true = estimate
+
+	ret = fun_kn0_xyzuxuyuz5A(nrows, stackedQ, stackedX, stackedU, k5, &fmin); printf("fun_kn0 = %f\n", fmin);
+	ret = estimate_kn0_xyzuxuyuz5A_subset(nrows, stackedQ, stackedX, stackedU, k5, k5u, k5d, knSubset, nlArray, &fmin);
+
+	printf("k5u[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5u[i]); } printf("]\n");
+	printf("k50[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k50[i]); } printf("]\n");
+	printf("k5 [");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5[i]); } printf("]\n");
+	printf("k5d[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
+}
+void check_kn0_xyzuxuyuz6a_sub() {
+	double fmin = 220000;
+	printf("\nkn0_xyzuxuyuz6a_sub\n");
+	for (int i = 0; i < 6; i++) { k6[i] = k60[i]; }
+
+	bool knSubset[] = { 1, 1, 1, 1, 1, 1 };
+	//bool knSubset[] = { 0, 0, 0, 1, 1, 0 };
+	//bool knSubset[] = { 0, 0, 0, 1, 1, 0 }; //true = estimate
+
+	ret = fun_kn0_xyzuxuyuz6A(nrows, stackedQ, stackedX, stackedU, k6, &fmin); printf("fun_kn0 = %f\n", fmin);
+	ret = estimate_kn0_xyzuxuyuz6A_subset(nrows, stackedQ, stackedX, stackedU, k6, k6u, k6d, knSubset, nlArray, &fmin);
+
+	printf("k6u[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6u[i]); } printf("]\n");
+	printf("k60[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k60[i]); } printf("]\n");
+	printf("k6 [");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6[i]); } printf("]\n");
+	printf("k6d[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
+}
+void check_kn0_xyzuxuyuz11a_sub() {
+	double fmin = 220000;
+	printf("\nkn0_xyzuxuyuz11a_sub\n");
+	for (int i = 0; i < 11; i++) { k11[i] = k110[i]; }
+
+	bool knSubset[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	//bool knSubset[] = { 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0 };
+	//bool knSubset[] = { 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }; //true = estimate
+
+	ret = fun_kn0_xyzuxuyuz11A(nrows, stackedQ, stackedX, stackedU, k11, &fmin); printf("fun_kn0 = %f\n", fmin);
+	ret = estimate_kn0_xyzuxuyuz11A_subset(nrows, stackedQ, stackedX, stackedU, k11, k11u, k11d, knSubset, nlArray, &fmin);
+
+	printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
+	printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k110[i]); } printf("]\n");
+	printf("k11 [");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
+	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
+}
+
 //simultaneous qp0 & kn0
 void check_qp0kn0_xyzuxuyuz5A() {
 	double fmin = 220000;
@@ -385,7 +440,7 @@ void check_qp0kn0_xyzuxuyuz6A() {
 	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
 	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
 	printf("k6u[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6u[i]); } printf("]\n");
-	printf("k60[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6[i]); } printf("]\n");
+	printf("k6 [");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6[i]); } printf("]\n");
 	printf("k6d[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6d[i]); } printf("]\n");
 }
 void check_qp0kn0_xyzuxuyuz11A() {
@@ -402,8 +457,75 @@ void check_qp0kn0_xyzuxuyuz11A() {
 	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
 	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
 	printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
-	printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
+	printf("k11 [");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
 	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+}
+
+void check_qp0kn0_xyzuxuyuz5A_sub() {
+	double fmin = 220000;
+	printf("\nqp0kn0_xyzuxuyuz5a_sub\n");
+	for (int i = 0; i < 5; i++) { k5[i] = k50[i]; }
+	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+
+	//bool knSubset[] = { 1, 1, 1, 1, 1 };
+	bool knSubset[] = { 0, 0, 0, 1, 1};
+	//bool knSubset[] = { 1, 1, 1, 1, 1}; //true = estimate
+
+	ret = fun_qp0kn0_xyzuxuyuz5A(nrows, stackedQ, stackedX, stackedU, qps0, k5, &fmin); printf("fun_qp0kn0 = %f\n", fmin);
+	ret = estimate_qp0kn0_xyzuxuyuz5A_subset(nrows, stackedQ, stackedX, stackedU, qps0, qpupdn, k5, k5u, k5d, knSubset, nlArray, &fmin);
+
+	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	printf("k5u[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5u[i]); } printf("]\n");
+	printf("k50[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k50[i]); } printf("]\n");
+	printf("k5 [");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5[i]); } printf("]\n");
+	printf("k5d[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", k5d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
+}
+void check_qp0kn0_xyzuxuyuz6A_sub() {
+	double fmin = 220000;
+	printf("\nqp0kn0_xyzuxuyuz6a_sub\n");
+	for (int i = 0; i < 6; i++) { k6[i] = k60[i]; }
+	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+
+	//bool knSubset[] = { 1, 1, 1, 1, 1, 1};
+	bool knSubset[] = { 0, 0, 0, 1, 1, 1};
+	//bool knSubset[] = { 1, 1, 0, 0, 1, 1}; //true = estimate
+
+	ret = fun_qp0kn0_xyzuxuyuz6A(nrows, stackedQ, stackedX, stackedU, qps0, k6, &fmin); printf("fun_qp0kn0 = %f\n", fmin);
+	ret = estimate_qp0kn0_xyzuxuyuz6A_subset(nrows, stackedQ, stackedX, stackedU, qps0, qpupdn, k6, k6u, k6d, knSubset, nlArray, &fmin);
+
+	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	printf("k6u[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6u[i]); } printf("]\n");
+	printf("k60[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k60[i]); } printf("]\n");
+	printf("k6 [");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6[i]); } printf("]\n");
+	printf("k6d[");  for (int i = 0; i < 6; i++) { printf("%8.3f ", k6d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
+}
+void check_qp0kn0_xyzuxuyuz11A_sub() {
+	double fmin = 220000;
+	printf("\nqp0kn0_xyzuxuyuz11a_sub\n");
+	for (int i = 0; i < 11; i++) { k11[i] = k110[i]; }
+	for (int i = 0; i < 5; i++) { qps0[i] = 0; }
+
+	//bool knSubset[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	bool knSubset[] = {0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0};
+	//bool knSubset[] = { 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 }; //true = estimate
+
+	ret = fun_qp0kn0_xyzuxuyuz11A(nrows, stackedQ, stackedX, stackedU, qps0, k11, &fmin); printf("fun_qp0kn0 = %f\n", fmin);
+	ret = estimate_qp0kn0_xyzuxuyuz11A_subset(nrows, stackedQ, stackedX, stackedU, qps0, qpupdn, k11, k11u, k11d, knSubset, nlArray, &fmin);
+	
+	printf("qpup[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[5 + i]); } printf("]\n");
+	printf("qps0[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qps0[i]); } printf("]\n");
+	printf("qpdn[");  for (int i = 0; i < 5; i++) { printf("%8.3f ", qpupdn[i]); } printf("]\n");
+	printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
+	printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k110[i]); } printf("]\n");
+	printf("k11 [");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
+	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+	printf("ret %d  fmin %f\n", ret, fmin);
 }
 
 void main() {
@@ -412,17 +534,25 @@ void main() {
 	//loadColumnDat("testSquareXYZ_i0_n2942_160622_191046.dat");
 	loadNQXU("forTestIPCpp.dat");
 	
-	check_qp0_xyzuxuyuz5a();
-	check_qp0_xyzuxuyuz6a();
-	check_qp0_xyzuxuyuz11a();
+	//check_qp0_xyzuxuyuz5a();
+	//check_qp0_xyzuxuyuz6a();
+	//check_qp0_xyzuxuyuz11a();
 
 	check_kn0_xyzuxuyuz5a();
+	check_kn0_xyzuxuyuz5a_sub();
 	check_kn0_xyzuxuyuz6a();
+	check_kn0_xyzuxuyuz6a_sub();
+	check_kn0_xyzuxuyuz11a();
 	check_kn0_xyzuxuyuz11a();
 
-	check_qp0kn0_xyzuxuyuz5A();
-	check_qp0kn0_xyzuxuyuz6A();
-	check_qp0kn0_xyzuxuyuz11A();
+	//check_qp0kn0_xyzuxuyuz5A();
+	//check_qp0kn0_xyzuxuyuz5A_sub();
+	//check_qp0kn0_xyzuxuyuz6A();
+	//check_qp0kn0_xyzuxuyuz6A_sub();
+	//check_qp0kn0_xyzuxuyuz11A();
+	//check_qp0kn0_xyzuxuyuz11A_sub();
+
+	//estimate joint angles by iterative IK(Hms) & IP(qps^, Hms)?
 	
 	std::cout << "\n\nPress Enter";
 	std::getchar();
