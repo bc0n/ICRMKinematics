@@ -68,6 +68,8 @@ public:
 	int estimateKn(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin);
 
 	// simultaneous qp0 & kn0
+	void funQpKn(    int nSamps, double *stackedQ, double *stackedX, double *qp0, double *kn0, double *fmin);
+	int estimateQpKn(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *kn0, double *fmin);
 	void funQpKn(    int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin);
 	int estimateQpKn(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin);
 };

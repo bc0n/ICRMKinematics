@@ -9,7 +9,7 @@ InvP_nlopt<KPMS, TFK>::InvP_nlopt() {
 	JOINTLIMITS q0Lims;
 	NLOPTPARAMS nlParams;
 
-	bool knSub[kup.nParams];
+	static bool knSub[kup.nParams]; //must be static
 	for (int i = 0; i < kup.nParams; i++) {
 		knSub[i] = true;
 	}
@@ -104,7 +104,7 @@ void InvP_nlopt<KPMS, TFK>::funQp(int nSamps, double *stackedQ, double *stackedU
 	std::vector<double> x(kup.nParams);
 	for (int i = 0; i < kup.nParams; i++) { x[i] = kn0[i]; }
 
-	*fmin = err_Qp_xyzuxuyuz<KPMS, TFK>(x, x, &fip);
+	*fmin = err_Qp_xyzuxuyuz<KPMS, TFK>(x, x, &fip) / nSamps;
 }
 
 template <class KPMS, class TFK>
@@ -242,7 +242,7 @@ double err_Kn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &grad,
 			kna[i] = pfip->knDefault[i];
 		}
 	}
-
+	
 	// FK with the new params
 	TFK fk(kna);
 
@@ -271,6 +271,7 @@ double err_Kn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &grad,
 		evec(5) = pfip->stackedU[isamp * 3 + 2] - Hnew(2, 0);
 
 		accum += evec.norm();
+		//printf("%d: qps[%f %f %f %f %f] - Hnew[%f %f %f %f %f %f] evec[%f %f %f %f %f %f] = %f = %f\n", isamp, qps[0],qps[1],qps[2],qps[3],qps[4], Hnew(0,3),Hnew(1,3),Hnew(2,3),Hnew(0,0),Hnew(1,0),Hnew(2,0), evec(0), evec(1), evec(2), evec(3), evec(4), evec(5), evec.norm(), accum);
 	}
 	return accum;
 }
@@ -285,11 +286,21 @@ void InvP_nlopt<KPMS, TFK>::funKn(int nSamps, double *stackedQ, double *stackedU
 	fip.knSubset = knSubset;
 	fip.knDefault = kn0;
 
-
-	std::vector<double> x(kup.nParams);
-	for (int i = 0; i < kup.nParams; i++) { x[i] = kn0[i]; }
-
-	*fmin = err_Kn_xyzuxuyuz<KPMS, TFK>(x, x, &fip);
+	// find objective length
+	int numX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i])
+			numX++;
+	}
+	std::vector<double> x(numX);
+	int iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			x[iX] = kn0[i];
+			iX++;
+		}
+	}
+	*fmin = err_Kn_xyzuxuyuz<KPMS, TFK>(x, x, &fip) / nSamps;
 }
 
 template <class KPMS, class TFK>
@@ -382,6 +393,264 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 		alg.set_local_optimizer(lAlg);
 	}
 	
+	//FILE *fid;
+	//fopen_s(&fid, "estimate_kn0.txt", "w+");
+	//fprintf(fid, "estimateKn with nSamps[%d] numX[%d]\n", nSamps, numX);
+	//fprintf(fid, "knSubset(%d)[", kup.nParams);
+	//for (int i = 0; i < kup.nParams; i++) {
+	//	fprintf(fid, "%d ", knSubset[i]);
+	//}
+	//fprintf(fid, "]\nlimup[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", limup[i]);
+	//}
+	//fprintf(fid, "]\n    x[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", x[i]);
+	//}
+	//fprintf(fid, "]\nlimdn[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", limdn[i]);
+	//}
+	
+
+
+	// solve
+	nlopt::result res;
+	try {
+		res = alg.optimize(x, *fmin);
+	}
+	catch (nlopt::roundoff_limited e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught RoundoffLimited: " << e.what() << std::endl;
+		//fclose(fid);
+	}
+	catch (nlopt::forced_stop e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught ForcedStop: " << e.what() << std::endl;
+		//fclose(fid);
+	}
+	catch (std::runtime_error e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+		//fclose(fid);
+	}
+	catch (std::invalid_argument e) {
+		res = nlopt::FAILURE;
+		printf("Caught: %s for x=[", e.what());
+		for (int i = 0; i < numX; i++) { printf("%f ", x[i]); }
+		printf("]\n");
+		//fclose(fid);
+	}
+	catch (std::bad_alloc e) {
+		res = nlopt::FAILURE;
+		std::cout << "Caught: " << e.what() << std::endl;
+		//fclose(fid);
+	}
+		
+
+
+	// unpack from solver
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			kn0[i] = x[iX];
+			iX++;
+		}
+	}
+	*fmin /= nSamps;
+
+	//fprintf(fid, "]\n  kn1[");
+	//for (int i = 0; i < kup.nParams; i++) {
+	//	fprintf(fid, "%f ", kn0[i]);
+	//}
+	//fprintf(fid, "]\n fmin[%f]", *fmin);
+	//fclose(fid);
+
+	return res;
+}
+
+
+//simultaneous qp0 & kn0
+//xyz only
+template <class KPMS, class TFK>
+double err_QpKn_xyz(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
+	FIPDATA *pfip;
+	pfip = (FIPDATA*)fipData;
+
+	double qps[5];
+	double accum = 0.0;
+
+	//x = [q0,q1,q2,q3,q4, tx01,ty01,tz01,ry01,rz01, tx23, ry34,rz34,cathL, ry45,rz45
+	KPMS kp;
+	double kna[kp.nParams];
+	int ix = 0; // since nX <= nParams, need a separate index
+	for (int i = 0; i < kp.nParams; i++) {
+		if (pfip->knSubset[i]) {
+			kna[i] = x[5 + ix]; //kn params follow the q0s
+			ix++;
+		}
+		else {
+			kna[i] = pfip->knDefault[i];
+		}
+	}
+
+	// FK with the new params
+	TFK fk(kna);
+
+	//calculate error over all samps
+	Eigen::Matrix4d Hnew;
+	Eigen::VectorXd evec(3);
+	for (int isamp = 0; isamp < pfip->nSamps; isamp++) {
+		//update q
+		for (int j = 0; j < 5; j++) {
+			qps[j] = x[j] + pfip->stackedQ[isamp * 5 + j];
+		}
+
+		//new position
+		Hnew = fk.qps2H05(qps);
+
+		//error
+		evec(0) = pfip->stackedX[isamp * 3 + 0] - Hnew(0, 3);
+		evec(1) = pfip->stackedX[isamp * 3 + 1] - Hnew(1, 3);
+		evec(2) = pfip->stackedX[isamp * 3 + 2] - Hnew(2, 3);
+
+		accum += evec.norm();
+	}
+	return accum;
+}
+
+template <class KPMS, class TFK>
+void InvP_nlopt<KPMS, TFK>::funQpKn(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *kn0, double *fmin) {
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
+
+	std::vector<double> x(nQps + kup.nParams);
+	for (int i = 0; i < nQps; i++) { x[i] = qp0[i]; }
+	for (int i = 0; i < kup.nParams; i++) { x[i + nQps] = kn0[i]; }
+	*fmin = err_QpKn_xyz<KPMS, TFK>(x, x, &fip) / nSamps;
+}
+
+template <class KPMS, class TFK>
+int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *kn0, double *fmin) {
+	//fill optimization data struct
+	FIPDATA fip;
+	fip.nSamps = (const int)nSamps;
+	fip.stackedQ = stackedQ;
+	fip.stackedX = stackedX;
+	fip.knSubset = knSubset;
+	fip.knDefault = kn0;
+
+	// find objective length
+	int iX = 0;
+	int numX = nQps;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i])
+			numX++;
+	}
+
+	// get an alg object
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), numX); //there are 5 qps + n( kinematic params in knParams11A )
+
+	// set objective
+	void *pfip;
+	pfip = &fip;
+	alg.set_min_objective(err_QpKn_xyz<KPMS, TFK>, pfip);
+
+	// set initial step size (only used by nongradient methods)
+	std::vector<double> iniStep(numX);
+	for (int i = 0; i < numX; i++) { iniStep[i] = .001; }
+	alg.set_initial_step(iniStep);
+	alg.set_default_initial_step(iniStep);
+
+	//set boundary constraints
+	std::vector<double> limup(numX);
+	std::vector<double> limdn(numX);
+	for (int i = 0; i < nQps; i++) {
+		limup[i] = q0Lims.up[i];
+		limdn[i] = q0Lims.dn[i];
+	}
+	double knaup[kup.nParams], knadn[kup.nParams];
+	kinematicStruct2Array(&kup, knaup);
+	kinematicStruct2Array(&kdn, knadn);
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			limup[nQps + iX] = knaup[i];
+			limdn[nQps + iX] = knadn[i];
+			iX++;
+		}
+	}
+	alg.set_upper_bounds(limup);
+	alg.set_lower_bounds(limdn);
+
+	// set start x to be within bounds
+	std::vector<double> x(numX);
+	for (int i = 0; i < nQps; i++) { x[i] = qp0[i]; }
+	iX = 0;
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSubset[i]) {
+			x[nQps + iX] = kn0[i];
+			iX++;
+		}
+	}
+	for (int i = 0; i < numX; i++) {
+		if (x[i] <= limdn[i]) {
+			x[i] = limdn[i];
+		}
+		if (limup[i] <= x[i]) {
+			x[i] = limup[i];
+		}
+	}
+
+	// set stopping criteria
+	alg.set_stopval(nlParams.minFunVal); // stop when fmin is less than this
+	alg.set_ftol_abs(nlParams.tolFunAbs);
+	alg.set_xtol_abs(nlParams.tolXAbs);
+	alg.set_maxeval(nlParams.maxIts);
+	alg.set_maxtime(nlParams.maxTimeSec);
+
+	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
+		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
+
+		lAlg.set_min_objective(err_QpKn_xyz<KPMS, TFK>, pfip);
+		lAlg.set_upper_bounds(limup);
+		lAlg.set_lower_bounds(limdn);
+		lAlg.set_stopval(nlParams.minFunVal);
+		lAlg.set_ftol_abs(nlParams.tolFunAbs);
+		lAlg.set_xtol_abs(nlParams.tolXAbs);
+		lAlg.set_maxeval(nlParams.maxIts);
+		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+
+		alg.set_local_optimizer(lAlg);
+	}
+
+	//FILE *fid;
+	//fopen_s(&fid, "estimate_qp0kn0_xyz.txt", "w+");
+	//fprintf(fid, "estimateKn with nSamps[%d] numX[%d]\n", nSamps, numX);
+	//fprintf(fid, "knSubset(%d)[", kup.nParams);
+	//for (int i = 0; i < kup.nParams; i++) {
+	//	fprintf(fid, "%d ", knSubset[i]);
+	//}
+	//fprintf(fid, "]\nlimup[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", limup[i]);
+	//}
+	//fprintf(fid, "]\n    x[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", x[i]);
+	//}
+	//fprintf(fid, "]\nlimdn[");
+	//for (int i = 0; i < numX; i++) {
+	//	fprintf(fid, "%f ", limdn[i]);
+	//}
+
+
 	// solve
 	nlopt::result res;
 	try {
@@ -411,20 +680,26 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 	}
 
 	// unpack from solver
+	for (int i = 0; i < nQps; i++) { qp0[i] = x[i]; }
 	iX = 0;
 	for (int i = 0; i < kup.nParams; i++) {
 		if (knSubset[i]) {
-			kn0[i] = x[iX];
+			kn0[i] = x[nQps + iX];
 			iX++;
 		}
 	}
 	*fmin /= nSamps;
 
+	//fprintf(fid, "]\n  kn1[");
+	//for (int i = 0; i < kup.nParams; i++) {
+	//	fprintf(fid, "%f ", kn0[i]);
+	//}
+	//fprintf(fid, "]\n fmin[%f]", *fmin);
+	//fclose(fid);
+
 	return res;
 }
-
-
-//simultaneous qp0 & kn0
+//xyzuxuyuz
 template <class KPMS, class TFK>
 double err_QpKn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &grad, void *fipData) {
 	FIPDATA *pfip;
@@ -492,7 +767,7 @@ void InvP_nlopt<KPMS, TFK>::funQpKn(int nSamps, double *stackedQ, double *stacke
 	for (int i = 0; i < nQps; i++) { x[i] = qp0[i]; }
 	for (int i = 0; i < kup.nParams; i++) { x[i + nQps] = kn0[i]; }
 
-	*fmin = err_QpKn_xyzuxuyuz<KPMS,TFK>(x, x, &fip);
+	*fmin = err_QpKn_xyzuxuyuz<KPMS,TFK>(x, x, &fip) / nSamps;
 }
 
 template <class KPMS, class TFK>
@@ -632,10 +907,6 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 
 	return res;
 }
-
-
-
-
 
 
 //Kinematic parameter struct to array

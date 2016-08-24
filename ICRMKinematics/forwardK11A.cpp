@@ -67,19 +67,22 @@ Eigen::Matrix4d FwdK11A::qps2H04(double *qps) {
 
 	//translate from pitch to catheter base
 	H(0, 3) = physicalDims.lRoll;
+
 	//rotate to catheter plane
 	R = Eigen::AngleAxisd(kinParams.ry34, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(kinParams.rz34, Eigen::Vector3d::UnitZ());
 	H.block<3, 3>(0, 0) = R;
 
 	//translate to the tip
+	if (qps[3] <= 0) qps[3] = 1e-6;
 	double al = pow(qps[3] * kinParams.kAlpha, kinParams.eAlpha); //parabolic catheter
-	if (al < 1e-3) {
+	if (al < 1e-3 || al > 10) {
 		al = 1e-3;
 	}
 	double r = kinParams.lCath / al; //'radius' of catheter arc
 	Rxyz(0, 3) = r * sin(al);
 	Rxyz(1, 3) = r * (1 - cos(al));
 	H = H*Rxyz;
+
 	//rotate to tip
 	R = Eigen::AngleAxisd(al, Eigen::Vector3d::UnitZ());
 	Rxyz.setIdentity();

@@ -142,6 +142,27 @@ classdef inter2D_kn11A_dll < inter2D
             res.kn0 = obj.knArray2Struct(knEst);
             res.fmin = fmin;
         end
+        % res[ret,kn0,fmin] = obj.estimate_kn0_xyzuxuyuz( qps, Hs, kn0,knup,kndn )
+        function res = estimate_kn0_xyzuxuyuz_sub(obj, qps, Hs, kn0,knup,kndn, subset )
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            if isstruct(knup); knup = obj.knStruct2Array(knup); end;
+            if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
+            
+            nlArray = obj.nlStruct2Array(obj.opts);
+            fmin = 1111111.1;
+            
+            tic
+            [ret,~,~,~,knEst,~,~,~,~,fmin] = calllib(obj.name, 'estimate_kn0_xyzuxuyuz11A_subset', n, stackedQ, stackedX, stackedU, kn0, knup, kndn, subset, nlArray, fmin);
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(knEst);
+            res.fmin = fmin;
+        end
         
         % res[ret,kn0,qp0,fmin] = obj.estimate_qp0kn0_xyzuxuyuz( qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
         function res = estimate_qp0kn0_xyzuxuyuz(obj, qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )

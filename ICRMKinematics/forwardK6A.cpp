@@ -15,8 +15,6 @@ FwdK6A::FwdK6A(KINEMATICPARAMS6A inParams) {
 	kinParams = inParams;
 }
 Eigen::Matrix4d FwdK6A::qps2H01(double *qps) {
-	//printf("kinParams = [%f %f %f %f %f %f]\n", kinParams.cathL, kinParams.rz01, kinParams.tx01, kinParams.ty01, kinParams.tz01, kinParams.tx23);
-	
 	Eigen::Matrix3d R;
 	Eigen::Matrix4d Rxyz;
 	R = Eigen::AngleAxisd(kinParams.rz01, Eigen::Vector3d::UnitZ())	* Eigen::AngleAxisd(qps[0], Eigen::Vector3d::UnitX());

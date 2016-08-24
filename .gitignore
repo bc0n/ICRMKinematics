@@ -227,3 +227,6 @@ matlab/i2dll_thunk_pcwin64.dll
 matlab/i2dll_thunk_pcwin64.lib
 *.dll
 matlab/print_ni_xml_object.m
+ICRMKinematics_test/estimate_kn0.txt
+ICRMKinematics_test/estimate_qp0kn0_xyz.txt
+ICRMKinematics_test/InvP_nlopt_kn0.txt

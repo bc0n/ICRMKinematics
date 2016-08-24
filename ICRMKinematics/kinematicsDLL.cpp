@@ -411,33 +411,48 @@ DLLIMPORT int fun_qp0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stacked
 	return 0;
 }
 
-DLLIMPORT int fun_kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *kns0, double *fmin) {
+DLLIMPORT int fun_kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip;
 	ip.funKn(nSamps, stackedQ, stackedX, stackedU, kns0, fmin);
 	return 0;
 }
-DLLIMPORT int fun_kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *kns0, double *fmin) {
+DLLIMPORT int fun_kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip;
 	ip.funKn(nSamps, stackedQ, stackedX, stackedU, kns0, fmin);
 	return 0;
 }
-DLLIMPORT int fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *kns0, double *fmin) {
+DLLIMPORT int fun_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip;
 	ip.funKn(nSamps, stackedQ, stackedX, stackedU, kns0, fmin);
 	return 0;
 }
 
-DLLIMPORT int fun_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *kns0, double *fmin) {
+DLLIMPORT int fun_qp0kn0_xyz5A(int nSamps, double *stackedQ, double *stackedX, double *qps0, double *kns0, double *fmin) {
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip;
+	ip.funQpKn(nSamps, stackedQ, stackedX, qps0, kns0, fmin);
+	return 0;
+}
+DLLIMPORT int fun_qp0kn0_xyz6A(int nSamps, double *stackedQ, double *stackedX, double *qps0, double *kns0, double *fmin) {
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip;
+	ip.funQpKn(nSamps, stackedQ, stackedX, qps0, kns0, fmin);
+	return 0;
+}
+DLLIMPORT int fun_qp0kn0_xyz11A(int nSamps, double *stackedQ, double *stackedX, double *qps0, double *kns0, double *fmin) {
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip;
+	ip.funQpKn(nSamps, stackedQ, stackedX, qps0, kns0, fmin);
+	return 0;
+}
+DLLIMPORT int fun_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip;
 	ip.funQpKn(nSamps, stackedQ, stackedX, stackedU, qps0, kns0, fmin);
 	return 0;
 }
-DLLIMPORT int fun_qp0kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *kns0, double *fmin) {
+DLLIMPORT int fun_qp0kn0_xyzuxuyuz6A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip;
 	ip.funQpKn(nSamps, stackedQ, stackedX, stackedU, qps0, kns0, fmin);
 	return 0;
 }
-DLLIMPORT int fun_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *qps0, double *kns0, double *fmin) {
+DLLIMPORT int fun_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qps0, double *kns0, double *fmin) {
 	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip;
 	ip.funQpKn(nSamps, stackedQ, stackedX, stackedU, qps0, kns0, fmin);
 	return 0;
@@ -567,35 +582,110 @@ DLLIMPORT int estimate_kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double *st
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
 
-DLLIMPORT int estimate_kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
 	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
-DLLIMPORT int estimate_kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
 	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
-DLLIMPORT int estimate_kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
 	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
 	JOINTLIMITS qp0Lims; //default ok, not used
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateKn(nSamps, stackedQ, stackedX, stackedU, kn0, fmin);
 }
 
 // wrap joint qp0 & kn0
+DLLIMPORT int estimate_qp0kn0_xyz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
+	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, qp0, kn0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
+	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, qp0, kn0, fmin);
+}
+DLLIMPORT int estimate_qp0kn0_xyz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
+	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
+	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
+	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
+	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
+
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
+	return ip.estimateQpKn(nSamps, stackedQ, stackedX, qp0, kn0, fmin);
+}
 DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *nlArray, double *fmin) {
 	
 	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
@@ -624,31 +714,55 @@ DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A(int nSamps, double *stackedQ, double 
 	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz5A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS5A kup = kinArray2Struct5A(knup);
 	KINEMATICPARAMS5A kdn = kinArray2Struct5A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++){
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS5A, FwdK5A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz6A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS6A kup = kinArray2Struct6A(knup);
 	KINEMATICPARAMS6A kdn = kinArray2Struct6A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS6A, FwdK6A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
-DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, bool *knSub, double *nlArray, double *fmin) {
+DLLIMPORT int estimate_qp0kn0_xyzuxuyuz11A_subset(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *q0Lims, double *kn0, double *knup, double *kndn, double *knSub, double *nlArray, double *fmin) {
 	KINEMATICPARAMS11A kup = kinArray2Struct11A(knup);
 	KINEMATICPARAMS11A kdn = kinArray2Struct11A(kndn);
 	JOINTLIMITS qp0Lims = jntArray2Struct(q0Lims);
 	NLOPTPARAMS nlParams = nlArray2Struct(nlArray);
 
-	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knSub, qp0Lims, nlParams);
+	bool knsubs[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		if (knSub[i] == 0)
+			knsubs[i] = 0;
+		else
+			knsubs[i] = 1;
+	}
+
+	InvP_nlopt<KINEMATICPARAMS11A, FwdK11A> ip(kup, kdn, knsubs, qp0Lims, nlParams);
 	return ip.estimateQpKn(nSamps, stackedQ, stackedX, stackedU, qp0, kn0, fmin);
 }
 
