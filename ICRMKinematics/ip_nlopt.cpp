@@ -37,6 +37,24 @@ InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsAr
 	knDefault = knDft;
 }
 template <class KPMS, class TFK>
+InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg, NLOPTPARAMS lnlArg) {
+	kup = kupArg;
+	kdn = kdnArg;
+	q0Lims = q0LimsArg;
+	nlParams = nlArg;
+	localNLParams = lnlArg;
+
+	static bool knSub[kup.nParams];
+	for (int i = 0; i < kup.nParams; i++) {
+		knSub[i] = true;
+	}
+	knSubset = knSub;
+
+	double knDft[kup.nParams];
+	kinematicStruct2Array(&kup, knDft);
+	knDefault = knDft;
+}
+template <class KPMS, class TFK>
 InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg) {
 	kup = kupArg;
 	kdn = kdnArg;
@@ -47,6 +65,19 @@ InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, J
 	double knDft[kup.nParams];
 	kinematicStruct2Array(&kup, knDft);//the non-estimated have kup=kdn
 	knDefault = knDft;	
+}
+template <class KPMS, class TFK>
+InvP_nlopt<KPMS, TFK>::InvP_nlopt(KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg, NLOPTPARAMS localNLArg) {
+	kup = kupArg;
+	kdn = kdnArg;
+	q0Lims = q0LimsArg;
+	nlParams = nlArg;
+	localNLParams = localNLArg;
+	knSubset = knSubsetArg;
+
+	double knDft[kup.nParams];
+	kinematicStruct2Array(&kup, knDft);//the non-estimated have kup=kdn
+	knDefault = knDft;
 }
 
 
@@ -172,17 +203,17 @@ int InvP_nlopt<KPMS, TFK>::estimateQp(int nSamps, double *stackedQ, double *stac
 	alg.set_maxtime(nlParams.maxTimeSec);
 
 	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
-		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
-
-		lAlg.set_min_objective(err_Qp_xyzuxuyuz<KPMS, TFK>, pfip);
+	if (alg.get_algorithm() == nlopt::GN_MLSL_LDS) {
+		nlopt::opt lAlg(ipTranslateNLOptAlg(localNLParams.method), alg.get_dimension());
+std::cout << "Local optimization " << lAlg.get_algorithm_name() << std::endl;
+		lAlg.set_min_objective(err_QpKn_xyzuxuyuz<KPMS, TFK>, pfip);
 		lAlg.set_upper_bounds(limup);
 		lAlg.set_lower_bounds(limdn);
-		lAlg.set_stopval(nlParams.minFunVal);
-		lAlg.set_ftol_abs(nlParams.tolFunAbs);
-		lAlg.set_xtol_abs(nlParams.tolXAbs);
-		lAlg.set_maxeval(nlParams.maxIts);
-		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+		lAlg.set_stopval(localNLParams.minFunVal);
+		lAlg.set_ftol_abs(localNLParams.tolFunAbs);
+		lAlg.set_xtol_abs(localNLParams.tolXAbs);
+		lAlg.set_maxeval(localNLParams.maxIts);
+		lAlg.set_maxtime(localNLParams.maxTimeSec);
 
 		alg.set_local_optimizer(lAlg);
 	}
@@ -378,17 +409,17 @@ int InvP_nlopt<KPMS, TFK>::estimateKn(int nSamps, double *stackedQ, double *stac
 	alg.set_maxtime(nlParams.maxTimeSec);
 
 	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
-		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
-
-		lAlg.set_min_objective(err_Kn_xyzuxuyuz<KPMS, TFK>, pfip);
+	if (alg.get_algorithm() == nlopt::GN_MLSL_LDS) {
+		nlopt::opt lAlg(ipTranslateNLOptAlg(localNLParams.method), alg.get_dimension());
+		std::cout << "Local optimization " << lAlg.get_algorithm_name() << std::endl;
+		lAlg.set_min_objective(err_QpKn_xyzuxuyuz<KPMS, TFK>, pfip);
 		lAlg.set_upper_bounds(limup);
-		lAlg.set_lower_bounds(limdn); 
-		lAlg.set_stopval(nlParams.minFunVal);
-		lAlg.set_ftol_abs(nlParams.tolFunAbs);
-		lAlg.set_xtol_abs(nlParams.tolXAbs);
-		lAlg.set_maxeval(nlParams.maxIts);
-		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+		lAlg.set_lower_bounds(limdn);
+		lAlg.set_stopval(localNLParams.minFunVal);
+		lAlg.set_ftol_abs(localNLParams.tolFunAbs);
+		lAlg.set_xtol_abs(localNLParams.tolXAbs);
+		lAlg.set_maxeval(localNLParams.maxIts);
+		lAlg.set_maxtime(localNLParams.maxTimeSec);
 
 		alg.set_local_optimizer(lAlg);
 	}
@@ -615,17 +646,17 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	alg.set_maxtime(nlParams.maxTimeSec);
 
 	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
-		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
-
-		lAlg.set_min_objective(err_QpKn_xyz<KPMS, TFK>, pfip);
+	if (alg.get_algorithm() == nlopt::GN_MLSL_LDS) {
+		nlopt::opt lAlg(ipTranslateNLOptAlg(localNLParams.method), alg.get_dimension());
+std::cout << "Local optimization " << lAlg.get_algorithm_name() << std::endl;
+		lAlg.set_min_objective(err_QpKn_xyzuxuyuz<KPMS, TFK>, pfip);
 		lAlg.set_upper_bounds(limup);
 		lAlg.set_lower_bounds(limdn);
-		lAlg.set_stopval(nlParams.minFunVal);
-		lAlg.set_ftol_abs(nlParams.tolFunAbs);
-		lAlg.set_xtol_abs(nlParams.tolXAbs);
-		lAlg.set_maxeval(nlParams.maxIts);
-		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+		lAlg.set_stopval(localNLParams.minFunVal);
+		lAlg.set_ftol_abs(localNLParams.tolFunAbs);
+		lAlg.set_xtol_abs(localNLParams.tolXAbs);
+		lAlg.set_maxeval(localNLParams.maxIts);
+		lAlg.set_maxtime(localNLParams.maxTimeSec);
 
 		alg.set_local_optimizer(lAlg);
 	}
@@ -790,7 +821,7 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	}
 
 	// get an alg object
-	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), numX); //there are 5 qps + n( kinematic params in knParams11A )
+	nlopt::opt alg(ipTranslateNLOptAlg(nlParams.method), numX);
 
 	// set objective
 	void *pfip;
@@ -851,17 +882,17 @@ int InvP_nlopt<KPMS, TFK>::estimateQpKn(int nSamps, double *stackedQ, double *st
 	alg.set_maxtime(nlParams.maxTimeSec);
 
 	//may need to set the local optimizer, eg MLSL http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-	if (ipTranslateNLOptAlg(nlParams.method) == GN_MLSL || ipTranslateNLOptAlg(nlParams.method) == GN_MLSL_LDS) {
-		nlopt::opt lAlg(nlopt::LN_NELDERMEAD, alg.get_dimension());
-
+	if (alg.get_algorithm() == nlopt::GN_MLSL_LDS) {
+		nlopt::opt lAlg(ipTranslateNLOptAlg(localNLParams.method), alg.get_dimension());
+std::cout << "Local optimization " << lAlg.get_algorithm_name() << std::endl;
 		lAlg.set_min_objective(err_QpKn_xyzuxuyuz<KPMS, TFK>, pfip);
 		lAlg.set_upper_bounds(limup);
 		lAlg.set_lower_bounds(limdn);
-		lAlg.set_stopval(nlParams.minFunVal);
-		lAlg.set_ftol_abs(nlParams.tolFunAbs);
-		lAlg.set_xtol_abs(nlParams.tolXAbs);
-		lAlg.set_maxeval(nlParams.maxIts);
-		lAlg.set_maxtime(10.0);//lAlg.set_maxtime(nlParams.maxTimeSec);
+		lAlg.set_stopval(localNLParams.minFunVal);
+		lAlg.set_ftol_abs(localNLParams.tolFunAbs);
+		lAlg.set_xtol_abs(localNLParams.tolXAbs);
+		lAlg.set_maxeval(localNLParams.maxIts);
+		lAlg.set_maxtime(localNLParams.maxTimeSec);
 
 		alg.set_local_optimizer(lAlg);
 	}

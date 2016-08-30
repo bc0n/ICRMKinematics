@@ -38,26 +38,25 @@ private:
 	FwdK11A tfk;
 	JOINTLIMITS q0Lims;
 	NLOPTPARAMS nlParams;
+	NLOPTPARAMS localNLParams;
 	const int nQps = 5;
 	bool *knSubset; // [1,1,1,1,1] = estimate all 5 parameters of fwdk5A; [0,0,0,0,0, 1,1,1,1,1,1] = estimate the latter half of 11A
-	
-
-	//void sub_expandX(const std::vector<double> &x, KPMS *kns);
-	//KINEMATICPARAMS5A sub_expandX(const std::vector<double> &x);
 
 public:
 	InvP_nlopt();//fun() evals don't need the args
 	
-	InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg);
-
-	/** InvP_nlopt(KPMS kupArg, KPMS kdnArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg, double knSubset = 0)
+	/**
 	*   kupArg		= kinematic parameter upper limit for kinematic estimation
 	*   kdnArg		= kinematic parameter lower limit
+	*   knSubset	= [1,1,1,1,1] = estimate all 5 parameters of fwdk5A; [0,0,0,0,0, 1,1,1,1,1,1] = estimate the latter half of 11A
 	*   q0LimsArg	= [down,up] joint limits for joint angle estimation
 	*   nlArg		= nonlinear optimization parameters
-	*   knSubset	= [1,1,1,1,1] = estimate all 5 parameters of fwdk5A; [0,0,0,0,0, 1,1,1,1,1,1] = estimate the latter half of 11A
+	*   localNLArg  = if nlArg.method = MLSL_LDS, these are the optimization paramters for the local optimizer
 	*/
-	InvP_nlopt(KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg);
+	InvP_nlopt( KPMS kupArg, KPMS kdnArg,                    JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg);
+	InvP_nlopt( KPMS kupArg, KPMS kdnArg,                    JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg, NLOPTPARAMS lnlArg);
+	InvP_nlopt( KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg);
+	InvP_nlopt( KPMS kupArg, KPMS kdnArg, bool *knSubsetArg, JOINTLIMITS q0LimsArg, NLOPTPARAMS nlArg, NLOPTPARAMS lNLArg);
 	
 	// estimate the starting joint angles
 	void funQp(    int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *qp0, double *kn0, double *fmin); // the kn0 used here is held constant

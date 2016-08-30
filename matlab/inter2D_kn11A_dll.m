@@ -66,7 +66,7 @@ classdef inter2D_kn11A_dll < inter2D
             if ~libisloaded(obj.name);
                 loadlibrary(dpath,hpath, 'alias', obj.name);
             end
-            %get processed signatures with % libfunctions('i2dll','-full')
+            %get processed signatures with % libfunctions('kn11Adll','-full')
         end
         
         function delete(obj)
@@ -165,7 +165,7 @@ classdef inter2D_kn11A_dll < inter2D
         end
         
         % res[ret,kn0,qp0,fmin] = obj.estimate_qp0kn0_xyzuxuyuz( qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
-        function res = estimate_qp0kn0_xyzuxuyuz(obj, qps, Hs, kn0, knup,kndn, qp0,qpup,qpdn )
+        function res = estimate_qp0kn0_xyzuxuyuz(obj, qps, Hs, qp0,qpup,qpdn, kn0, knup,kndn )
             n = numel(qps)/obj.nums.qps;
             
             stackedQ = reshape(qps', n*obj.nums.qps,1);
@@ -179,12 +179,95 @@ classdef inter2D_kn11A_dll < inter2D
             nlArray = obj.nlStruct2Array(obj.opts);
             
             tic
-            [ret,~,~,~,knEst,~,~,qpEst,~,~,fmin] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A', n,   stackedQ, stackedX, stackedU, kn0, knup, kndn, qp0, [qpdn;qpup], nlArray, 1e3);
+            % [int32, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr] estimate_qp0kn0_xyzuxuyuz11A(                   int32,  doublePtr, doublePtr, doublePtr, doublePtr,   doublePtr, doublePtr, doublePtr, doublePtr, doublePtr, doublePtr)
+            [    ret,         ~,         ~,         ~,         d,         ~,         f,         ~,         ~,         ~,         j] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A', n,   stackedQ,  stackedX,  stackedU,       qp0, [qpdn;qpup],       kn0,      knup,      kndn,   nlArray, 1e3);
+            %    ret    stackedQ  stackedX   stackedU        qp0     qpupdn        kn0       knup       kndn        nla       fmin
             res.telapsed = toc;
             res.ret = ret;
-            res.kn0 = obj.knArray2Struct(knEst);
-            res.qp0 = qpEst;
-            res.fmin = fmin;
+            res.kn0 = obj.knArray2Struct(f);
+            res.qp0 = d;
+            res.fmin = j;
+        end
+        function res = estimate_qp0kn0_xyzuxuyuz_subset(obj, qps, Hs, qp0,qpup,qpdn, kn0,knup,kndn,subset)
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            if isstruct(knup); knup = obj.knStruct2Array(knup); end;
+            if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
+            nlArray = obj.nlStruct2Array(obj.opts);
+            
+            tic
+            % [int, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl] estimate_qp0kn0_xyzuxuyuz11A_subset(                     int,      dbl,      dbl,      dbl, dbl,         dbl, dbl,  dbl,  dbl,    dbl,    dbl, dbl)
+            [  ret,   ~,   ~,   ~,   d,   ~,   f,   ~,   ~,   ~,   ~,   k] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A_subset', n, stackedQ, stackedX, stackedU, qp0, [qpdn;qpup], kn0, knup, kndn, subset, nlArray, 1e3);
+            %  ret    q    x    u  qp0 updn  kn0 knup kndn  sub  nla fmin
+            
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(f);
+            res.qp0 = d;
+            res.fmin = k;
+        end
+        function res = estimate_qp0kn0_xyzuxuyuz_subset_filter(obj, qps, Hs, qp0,qpup,qpdn, kn0,knup,kndn,subset, fcutHz )
+            n = numel(qps)/obj.nums.qps;
+sty = bplot3; sty.lco = [0,0,0]; sty.lst = 'none'; sty.msz = 10;
+bplot3(Hs(:,1:3,4), sty); hold on; title('filtering');
+            % Filter ASC
+            fs = 1/10e-3; %10ms loop
+            wn = fcutHz/fs/2;
+            [z,p,k] = butter(3, wn, 'low');
+            [sos,g] = zp2sos(z,p,k);
+            for i = 3:-1:1;
+                for j = 4:-1:1;
+                    Hs(:,i,j) = filtfilt(sos,g, Hs(:,i,j));
+                end
+            end
+sty.lco = [1,0,0]; bplot3(Hs(:,1:3,4), sty);
+
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            if isstruct(knup); knup = obj.knStruct2Array(knup); end;
+            if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
+            nlArray = obj.nlStruct2Array(obj.opts);
+
+            tic
+            % [int, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl] estimate_qp0kn0_xyzuxuyuz11A_subset(                     int,      dbl,      dbl,      dbl, dbl,         dbl, dbl,  dbl,  dbl,    dbl,    dbl, dbl)
+            [  ret,   ~,   ~,   ~,   d,   ~,   f,   ~,   ~,   ~,   ~,   k] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A_subset', n, stackedQ, stackedX, stackedU, qp0, [qpdn;qpup], kn0, knup, kndn, subset, nlArray, 1e3);
+            %  ret    q    x    u  qp0 updn  kn0 knup kndn  sub  nla fmin
+            
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(f);
+            res.qp0 = d;
+            res.fmin = k;
+        end
+        function res = estimate_qp0kn0_xyzuxuyuz_subset_mlsl(obj, qps, Hs, qp0,qpup,qpdn, kn0,knup,kndn,subset, nlMLSL,nlLDS )
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+            qpup = reshape(qpup,5,1); qpdn = reshape(qpdn,5,1);
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            if isstruct(knup); knup = obj.knStruct2Array(knup); end;
+            if isstruct(kndn); kndn = obj.knStruct2Array(kndn); end;
+            if isstruct(nlMLSL); nlMLSL = obj.nlStruct2Array(nlMLSL); end;
+            if isstruct(nlLDS); nlLDS = obj.nlStruct2Array(nlLDS); end;
+            tic
+            % [int, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl] estimate_qp0kn0_xyzuxuyuz11A_subset_mlsllds(                     int,      dbl,      dbl,      dbl, dbl,         dbl, dbl,  dbl,  dbl,    dbl,    dbl,   dbl, dbl)
+            [  ret,   ~,   ~,   ~,   d,   ~,   f,   ~,   ~,   ~,   ~,   ~,   l] = calllib(obj.name, 'estimate_qp0kn0_xyzuxuyuz11A_subset_mlsllds', n, stackedQ, stackedX, stackedU, qp0, [qpdn;qpup], kn0, knup, kndn, subset, nlMLSL, nlLDS, 1e3);
+            %  ret    q    x    u  qp0 updn  kn0 knup kndn  sub  nla lnla fmin
+            res.telapsed = toc;
+            res.ret = ret;
+            res.kn0 = obj.knArray2Struct(f);
+            res.qp0 = d;
+            res.fmin = l;
         end
         
         
