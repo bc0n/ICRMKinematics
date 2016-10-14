@@ -308,13 +308,13 @@ double err_Kn_xyzuxuyuz(const std::vector<double> &x, std::vector<double> &grad,
 }
 
 template <class KPMS, class TFK>
-void InvP_nlopt<KPMS, TFK>::funKn(int nSamps, double *stackedQ, double *stackedU, double *stackedX, double *kn0, double *fmin) {
+void InvP_nlopt<KPMS, TFK>::funKn(int nSamps, double *stackedQ, double *stackedX, double *stackedU, double *kn0, double *fmin) {
 	FIPDATA fip;
 	fip.nSamps = (const int)nSamps;
 	fip.stackedQ = stackedQ;
 	fip.stackedU = stackedU;
 	fip.stackedX = stackedX;
-	fip.knSubset = knSubset;
+	fip.knSubset = knSubset; //knSubset is set by the constructor above
 	fip.knDefault = kn0;
 
 	// find objective length

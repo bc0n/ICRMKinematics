@@ -101,6 +101,25 @@ classdef inter2D_kn11A_dll < inter2D
             end
         end %FK
         
+        
+        function res = fun_kn0_xyzuxuyuz(obj, qps, Hs, kn0)
+            n = numel(qps)/obj.nums.qps;
+            
+            stackedQ = reshape(qps', n*obj.nums.qps,1);
+            stackedX = reshape(Hs(:,1:3,4)', n*3,1);
+            stackedU = reshape(Hs(:,1:3,1)', n*3,1);
+        
+            if isstruct(kn0); kn0 = obj.knStruct2Array(kn0); end;
+            
+            fmin = 1111111.1;
+            
+            tic
+            [ret,~,~,~,~,fmin] = calllib(obj.name, 'fun_kn0_xyzuxuyuz11A', n, stackedQ, stackedX, stackedU, kn0, fmin);
+            res.telapsed = toc;
+            res.ret = ret;
+            res.fmin = fmin;
+        end
+        
         % res[ret,qp0,fmin] = obj.estimate_qp0_xyzuxuyuz( qps, Hs, kn0, qp0,qpup,qpdn )
         function res = estimate_qp0_xyzuxuyuz(obj, qps, Hs, kn0, qp0,qpup,qpdn )
             n = numel(qps)/obj.nums.qps;

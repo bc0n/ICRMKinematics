@@ -57,12 +57,12 @@ void init() {
 	//nlArray[2] = 06; // GN_ESCH
 	//nlArray[2] = 07; // GN_ISRES
 	//nlArray[2] = 08; // GN_MLSL
-	nlArray[2] = 9; // GN_MLSL_LDS -- slow due to local searches
+	//nlArray[2] = 9; // GN_MLSL_LDS -- slow due to local searches
 	//nlArray[2] = 12; // LN_BOBYQA
 	//nlArray[2] = 13; // LN_COBYLA
 	//nlArray[2] = 14; // LN_NelderMead
 	//nlArray[2] = 17; // LN_PRAXIS
-	//nlArray[2] = 18; // LN_SUBPLX
+	nlArray[2] = 18; // LN_SUBPLX
 
 	lnlArray[0] = 1e9; // maxIts
 	lnlArray[1] = 6; // max time sec
@@ -374,6 +374,8 @@ void check_kn0_xyzuxuyuz11a() {
 	printf("k11u[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11u[i]); } printf("]\n");
 	printf("k110[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11[i]); } printf("]\n");
 	printf("k11d[");  for (int i = 0; i < 11; i++) { printf("%8.3f ", k11d[i]); } printf("]\n");
+
+	ret = fun_kn0_xyzuxuyuz11A(nrows, stackedQ, stackedX, stackedU, k11, &fmin); printf("val0 = %f\n", fmin);
 }
 
 void check_kn0_xyzuxuyuz5a_sub() {
@@ -679,27 +681,27 @@ void main() {
 	//check_qp0_xyzuxuyuz5a();
 	//check_qp0_xyzuxuyuz6a();
 	//check_qp0_xyzuxuyuz11a();
-	check_qp0_xyzuxuyuz11a_mlsl();
+	//check_qp0_xyzuxuyuz11a_mlsl();
 
 	//check_kn0_xyzuxuyuz5a();
 	//check_kn0_xyzuxuyuz5a_sub();
 	//check_kn0_xyzuxuyuz6a();
 	//check_kn0_xyzuxuyuz6a_sub();
-	//check_kn0_xyzuxuyuz11a();
+	check_kn0_xyzuxuyuz11a();
 	//check_kn0_xyzuxuyuz11a_sub();
-	check_kn0_xyzuxuyuz11a_sub_mlsl();
+	//check_kn0_xyzuxuyuz11a_sub_mlsl();
 
 	//check_qp0kn0_xyz5A_sub();
 	//check_qp0kn0_xyz6A_sub();
 	//check_qp0kn0_xyz11A_sub();
-	check_qp0kn0_xyz11A_sub_mlsl();
+	//check_qp0kn0_xyz11A_sub_mlsl();
 	//check_qp0kn0_xyzuxuyuz5A();
 	//check_qp0kn0_xyzuxuyuz5A_sub();
 	//check_qp0kn0_xyzuxuyuz6A();
 	//check_qp0kn0_xyzuxuyuz6A_sub();
 	//check_qp0kn0_xyzuxuyuz11A();
 	//check_qp0kn0_xyzuxuyuz11A_sub();
-	check_qp0kn0_xyzuxuyuz11A_sub_mlsl();
+	//check_qp0kn0_xyzuxuyuz11A_sub_mlsl();
 
 	//estimate joint angles by iterative IK(Hms) & IP(qps^, Hms)?
 	
