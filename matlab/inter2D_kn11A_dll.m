@@ -289,6 +289,63 @@ sty.lco = [1,0,0]; bplot3(Hs(:,1:3,4), sty);
             res.fmin = l;
         end
         
+        function h = drawConfig(obj, qps, lcol )
+            if nargin < 3;
+                lcol = [1,1,1];
+            end
+            
+            [h01,h02,h03,h04,h05] = obj.forwardK(qps);
+            col = [0;0;0;1]; %H*col = XYZ1
+            
+            %01 too large
+            %12
+            xyz = [ h01*col, h01*obj.Ty( obj.drw.rProx)*col, h01*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
+                    h01*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Ty(-obj.drw.rProx)*col, h01*col,h02*col];
+            hs(1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            xyz = [ h01*col, h01*obj.Tz( obj.drw.rProx)*col, h01*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, ...
+                    h01*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lProx)*col, h01*obj.Tz(-obj.drw.rProx)*col, h01*col];
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            %23
+            xyz = [ h02*col, h02*obj.Ty( obj.drw.rProx)*col, h02*obj.Ty( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
+                    h02*obj.Ty(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Ty(-obj.drw.rProx)*col, h02*col,h03*col];
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            xyz = [ h02*col, h02*obj.Tz( obj.drw.rProx)*col, h02*obj.Tz( obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, ...
+                    h02*obj.Tz(-obj.drw.rProx)*obj.Tx(obj.drw.lPtch)*col, h02*obj.Tz(-obj.drw.rProx)*col, h02*col];
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.5);
+            
+            %34
+            qps(4) = qps(4) + obj.qp0(4);
+%             if qps(4) < 1e-3; qps(4) = 1e-3; end;
+%             r = obj.kns.lCath/qps(4); %radius of catheter arc
+            al = (qps(4)*obj.kns.kAlpha)^obj.kns.eAlpha; %allow slope,exponent in the articulation angle
+            if al < 1e-3; al = 1e-3; end
+            r = obj.kns.lCath/al; %radius of catheter arc
+            
+            h3 = h03*obj.Tx(obj.drw.lRoll)*obj.Ry(obj.kns.ry34)*obj.Rz(obj.kns.rz34);
+            cathPts = [ h3*col, h03*obj.Tz(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h03*obj.Tz(obj.drw.rCath)*col,...
+                        h03*col,h03*obj.Ty(obj.drw.rCath)*col, h03*obj.Ty(obj.drw.rCath)*obj.Tx(obj.drw.lRoll)*col, h3*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.1)))*obj.Tx(r*sin(al*.1))*obj.Rz(al*.1)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.2)))*obj.Tx(r*sin(al*.2))*obj.Rz(al*.2)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.3)))*obj.Tx(r*sin(al*.3))*obj.Rz(al*.3)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.4)))*obj.Tx(r*sin(al*.4))*obj.Rz(al*.4)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.5)))*obj.Tx(r*sin(al*.5))*obj.Rz(al*.5)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.6)))*obj.Tx(r*sin(al*.6))*obj.Rz(al*.6)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.7)))*obj.Tx(r*sin(al*.7))*obj.Rz(al*.7)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.8)))*obj.Tx(r*sin(al*.8))*obj.Rz(al*.8)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*.9)))*obj.Tx(r*sin(al*.9))*obj.Rz(al*.9)*col, ...
+                        h3* obj.Ty(r*(1-cos(al*1.)))*obj.Tx(r*sin(al*1.))*obj.Rz(al*1.)*col ];
+            hs(end+1) = plot3( cathPts(1,:),cathPts(2,:),cathPts(3,:), '.-', 'color', lcol*1);
+            
+            %45
+            xyz = [ h04*col, h05*col];
+            hs(end+1) = plot3(xyz(1,:), xyz(2,:), xyz(3,:), '-', 'color', lcol*.7);
+            
+            hs(1).DisplayName = 'drawCath';
+            for i = 2:length(hs); hs(i).HandleVisibility = 'off'; end
+            he = linkprop(hs, 'Visible');
+            h = hs(1);
+        end
+
         
     end %public methods
     
